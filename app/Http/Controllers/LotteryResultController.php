@@ -16,14 +16,9 @@ class LotteryResultController extends Controller
 
     public function lotteryResult(Request $request)
     {
-        $date = $request->filled('date')
-            ? Carbon::createFromDate($request->date)
-            : (
-                now()->format('H:i') < '18:00'
-                ? now()->subDay()->format('Y-m-d')
-                : now()->format('Y-m-d')
-            );
         $region = $request->filled('region') ? $request->region : 'XSMB';
+
+        $date = $this->handleDate($region, $request->date);
 
         if ($region == 'XSMB') {
             $lottery = LotteryResult::where('draw_date', $date)->where('region', $region)->first();
@@ -78,5 +73,19 @@ class LotteryResultController extends Controller
 
         broadcast(new LotteryResultSent($newNumberData));
         return response()->json([$newNumberData], 200);
+    }
+
+    private function handleDate($region, $date){
+        switch ($region){
+            case 'XSMB':
+                return $date ? $date : (now()->lt(today()->setTime(18, 15)) ? now()->subDay() : today());
+                break ;
+            case 'XSMN':
+                return $date ? $date : (now()->lt(today()->setTime(17, 15)) ? now()->subDay() : today());
+                break ;
+            case 'XSMT':
+                return $date ? $date : (now()->lt(today()->setTime(17, 15)) ? now()->subDay() : today());
+                break ;
+        }
     }
 }
