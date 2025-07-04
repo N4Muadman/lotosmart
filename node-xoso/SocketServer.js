@@ -1,7 +1,7 @@
 const WebSocket = require('ws');
 const fetch = require('node-fetch');
 
-const LARAVEL_API_URL = 'https://yourdomain.com/api/new-lottery-results';
+const LARAVEL_API_URL = 'http://127.0.0.1:8000/api/new-lottery-results';
 
 const ws = new WebSocket('wss://livexs.xoso.com.vn/', {
     headers: {
@@ -18,20 +18,20 @@ ws.on('open', () => {
 });
 
 ws.on('message', async (message) => {
-    const now = new Date();
-    const vietnamTime = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+    const vietnamTime = new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' });
+    const hour = new Date(vietnamTime);
 
-    if (vietnamTime.getHours() < 16 || vietnamTime.getHours() >= 19) return;
+    if (hour.getHours() < 16 || hour.getHours() >= 19) return;
 
     const text = message.toString();
     const cleanedText = text.replace(/^0\|2!/, '');
 
     let region = '';
-    if (vietnamTime.getHours() >= 16 && vietnamTime.getHours() < 17) {
+    if (hour.getHours() >= 16 && hour.getHours() < 17) {
         region = 'XSMN';
-    } else if (vietnamTime.getHours() >= 17 && vietnamTime.getHours() < 18) {
+    } else if (hour.getHours() >= 17 && hour.getHours() < 18) {
         region = 'XSMT';
-    } else if (vietnamTime.getHours() >= 18 && vietnamTime.getHours() < 19) {
+    } else if (hour.getHours() >= 18 && hour.getHours() < 19) {
         region = 'XSMB';
     }
 
