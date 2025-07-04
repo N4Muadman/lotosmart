@@ -20,8 +20,6 @@ class LotteryResultController extends Controller
 
         $date = $this->handleDate($region, $request->date)->format('Y-m-d');
 
-        dd($date);
-
         if ($region == 'XSMB') {
             $lottery = LotteryResult::where('draw_date', $date)->where('region', $region)->first();
 
