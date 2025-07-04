@@ -1,6 +1,8 @@
 const WebSocket = require('ws');
 const fetch = require('node-fetch');
 
+const LARAVEL_API_URL = 'https://yourdomain.com/api/new-lottery-results';
+
 const ws = new WebSocket('wss://livexs.xoso.com.vn/', {
     headers: {
         'Origin': 'https://xoso.com.vn',
@@ -14,25 +16,24 @@ const ws = new WebSocket('wss://livexs.xoso.com.vn/', {
 ws.on('open', () => {
     console.log('✅ Đã kết nối WebSocket xổ số!');
 });
-ws.on('message', async (message) => {
 
+ws.on('message', async (message) => {
     const now = new Date();
-    if (now.getHours() < 16 || now.getHours() >= 19) return;
+    const vietnamTime = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+
+    if (vietnamTime.getHours() < 16 || vietnamTime.getHours() >= 19) return;
 
     const text = message.toString();
-
     const cleanedText = text.replace(/^0\|2!/, '');
 
     let region = '';
-    if (now.getHours() >= 16 && now.getHours() < 17) {
+    if (vietnamTime.getHours() >= 16 && vietnamTime.getHours() < 17) {
         region = 'XSMN';
-    } else if (now.getHours() >= 17 && now.getHours() < 18) {
+    } else if (vietnamTime.getHours() >= 17 && vietnamTime.getHours() < 18) {
         region = 'XSMT';
-    } else if (now.getHours() >= 18 && now.getHours() < 19) {
+    } else if (vietnamTime.getHours() >= 18 && vietnamTime.getHours() < 19) {
         region = 'XSMB';
     }
-
-    const parts = cleanedText.split('!').filter(part => part.trim() !== '');
 
     const stationPattern = /(\d+)\|(\d+)\|([^|]+)\|([^@]+)@([^!]*)/g;
     const results = [];
@@ -58,12 +59,12 @@ ws.on('message', async (message) => {
     }
 
     try {
-        const res = await fetch('http://localhost:8000/api/new-lottery-results', {
+        const res = await fetch(LARAVEL_API_URL, {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
-             },
+            },
             body: JSON.stringify(results)
         });
 
@@ -72,4 +73,21 @@ ws.on('message', async (message) => {
     } catch (error) {
         console.error('Lỗi khi gửi về Laravel:', error.message);
     }
+});
+
+ws.on('error', (error) => {
+    console.error('WebSocket error:', error);
+});
+
+ws.on('close', () => {
+    console.log('WebSocket đã đóng kết nối');
+    setTimeout(() => {
+        console.log('Đang thử kết nối lại...');
+    }, 5000);
+});
+
+process.on('SIGINT', () => {
+    console.log('Đang dừng WebSocket client...');
+    ws.close();
+    process.exit();
 });
