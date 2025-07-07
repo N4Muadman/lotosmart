@@ -3,7 +3,13 @@
   "version": "1.0.0",
   "main": "SocketServer.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node SocketServer.js",
+    "dev": "node SocketServer.js",
+    "pm2-start": "pm2 start SocketServer.js --name xoso-websocket",
+    "pm2-stop": "pm2 stop xoso-websocket",
+    "pm2-restart": "pm2 restart xoso-websocket",
+    "pm2-status": "pm2 status",
+    "pm2-logs": "pm2 logs xoso-websocket"
   },
   "keywords": [],
   "author": "",
@@ -11,6 +17,7 @@
   "description": "",
   "dependencies": {
     "node-fetch": "^2.7.0",
-    "ws": "^8.18.2"
+    "ws": "^8.18.2",
+    "pm2": "^5.3.0"
   }
 }
