@@ -18,7 +18,7 @@ class LotteryResultController extends Controller
     {
         $region = $request->filled('region') ? $request->region : 'XSMB';
 
-        $date = $this->handleDate($region, $request->date)->format('Y-m-d');
+        $date = $this->handleDate($region, $request->date);
 
         if ($region == 'XSMB') {
             $lottery = LotteryResult::where('draw_date', $date)->where('region', $region)->first();
@@ -78,13 +78,13 @@ class LotteryResultController extends Controller
     private function handleDate($region, $date){
         switch ($region){
             case 'XSMB':
-                return $date ? $date : (now()->lt(today()->setTime(18, 15)) ? now()->subDay() : today());
+                return $date ? $date : (now()->lt(today()->setTime(18, 15)) ? now()->subDay() : today())->format('Y-m-d');
                 break ;
             case 'XSMN':
-                return $date ? $date : (now()->lt(today()->setTime(16, 15)) ? now()->subDay() : today());
+                return $date ? $date : (now()->lt(today()->setTime(16, 15)) ? now()->subDay() : today())->format('Y-m-d');
                 break ;
             case 'XSMT':
-                return $date ? $date : (now()->lt(today()->setTime(17, 15)) ? now()->subDay() : today());
+                return $date ? $date : (now()->lt(today()->setTime(17, 15)) ? now()->subDay() : today())->format('Y-m-d');
                 break ;
         }
     }
