@@ -20,6 +20,7 @@
 /storage/pail
 /vendor
 /node-xoso/node_modules
+/node-xoso/ecosystem.config.js
 Homestead.json
 Homestead.yaml
 npm-debug.log
