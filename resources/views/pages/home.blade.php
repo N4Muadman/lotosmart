@@ -43,6 +43,27 @@
                         <!-- Quick stats will be inserted here -->
                     </div>
 
+                    <div class="mb-3 relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all w-full">
+                        <div class="header-background-modal px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-800 text-white">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-4">
+                                        <h3 class="text-lg font-semibold">Lịch Sử Dự Đoán AI giải đặc biệt</h3>
+                                        <p class="text-blue-100 text-sm">Kết quả dự đoán 10 ngày gần nhất</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="history-content" class="max-h-[70vh] overflow-y-auto p-6">
+                            <!-- History items will be inserted here -->
+                        </div>
+                    </div>
+
                     <h3 class="mb-3 text-lg"><i class="fas fa-robot"></i> Kết quả dự đoán tất cả giải (10 số/ngày) của AI và kết quả đối chiếu thực tế của ngày hôm nay</h3>
                     {{-- <div id="quick-stats" class="quick-stats grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                         <!-- Quick stats will be inserted here -->
@@ -124,42 +145,6 @@
                     </div>
                 </div>
             </section>
-
-            <!-- History Modal -->
-            <div id="history-modal" class="hidden fixed inset-0 bg-gray-500/75 z-10">
-                <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
-                    <div class="flex min-h-full items-center justify-center p-4">
-                        <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all w-full max-w-6xl">
-                            <div class="header-background-modal px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-800 text-white">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0 w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                            </svg>
-                                        </div>
-                                        <div class="ml-4">
-                                            <h3 class="text-lg font-semibold">Lịch Sử Dự Đoán AI</h3>
-                                            <p class="text-blue-100 text-sm">Kết quả dự đoán 10 ngày gần nhất</p>
-                                        </div>
-                                    </div>
-                                    <button id="close-history-modal" class="text-white/80 hover:text-white">
-                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
-                            <div id="history-content" class="max-h-[70vh] overflow-y-auto p-6">
-                                <!-- History items will be inserted here -->
-                            </div>
-                            <div class="bg-gray-50 px-6 py-4 border-t">
-                                <button id="close-history-modal-footer" class="btn-close inline-flex items-center px-3 py-2 text-sm rounded-md bg-blue-500 text-white">Đóng</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <!-- Toast Container -->
             <div id="toastContainer" class="toast-container fixed bottom-4 right-4 space-y-2"></div>
@@ -251,11 +236,11 @@
                 document.getElementById('filter-date').addEventListener('change', () => this.LotteryFilter());
                 document.getElementById('filter-region').addEventListener('change', () => this.LotteryFilter());
                 document.getElementById('submit-stats').addEventListener('click', () => this.submitStatistics());
-                document.getElementById('close-history-modal').addEventListener('click', () => this.closeHistoryModal());
-                document.getElementById('close-history-modal-footer').addEventListener('click', () => this.closeHistoryModal());
-                document.getElementById('history-modal').addEventListener('click', (e) => {
-                    if (e.target === document.getElementById('history-modal')) this.closeHistoryModal();
-                });
+                // document.getElementById('close-history-modal').addEventListener('click', () => this.closeHistoryModal());
+                // document.getElementById('close-history-modal-footer').addEventListener('click', () => this.closeHistoryModal());
+                // document.getElementById('history-modal').addEventListener('click', (e) => {
+                //     if (e.target === document.getElementById('history-modal')) this.closeHistoryModal();
+                // });
             },
 
             async initializeData() {
@@ -279,7 +264,7 @@
                         date: this.data.filters.date,
                         region: this.data.filters.region
                     });
-                    const response = await fetch(`{{ config('api_endpoint.get_lottery_result') }}?${params}`, {
+                    const response = await fetch(`{{ route('lotteryResult') }}?${params}`, {
                         headers: { 'Accept': 'application/json' }
                     });
                     if (!response.ok) throw new Error('Failed to fetch lottery data');
@@ -309,7 +294,7 @@
                     const params = new URLSearchParams({
                         region: this.data.filters.region
                     });
-                    const response = await fetch(`{{ config('api_endpoint.ai_prediction_special_prize') }}?${params}`, {
+                    const response = await fetch(`{{ route('AiPredictionSpecialPrize') }}?${params}`, {
                         headers: { 'Accept': 'application/json' }
                     });
                     if (!response.ok) throw new Error('Failed to fetch AI prediction data');
@@ -338,7 +323,7 @@
                         days_period: this.data.statisticsForm.days_period,
                         region: this.data.statisticsForm.region
                     });
-                    const response = await fetch(`{{ config('api_endpoint.base_statis') }}?${params}`, {
+                    const response = await fetch(`{{ route('baseStatis') }}?${params}`, {
                         headers: { 'Accept': 'application/json' }
                     });
                     if (!response.ok) throw new Error('Failed to fetch statistics data');
@@ -595,12 +580,6 @@
                     <div class="stat-card p-4 bg-gray-50 rounded shadow text-center">
                         <div class="stat-number text-2xl font-bold">${this.data.aiStats.max_streak || 0}</div>
                         <div class="stat-label">Chuỗi ngày đoán đúng liên tiếp</div>
-                    </div>
-                    <div class="stat-card p-4 bg-gray-50 rounded shadow text-center">
-                        <div class="stat-number">
-                            <button id="open-history-modal" class="cursor-pointer"><i class="fas fa-eye"></i></button>
-                        </div>
-                        <div class="stat-label">Lịch sử dự đoán</div>
                     </div>
                 `;
                 document.getElementById('open-history-modal').addEventListener('click', () => this.openHistoryModal());

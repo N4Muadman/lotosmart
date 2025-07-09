@@ -35,4 +35,6 @@ return [
         ],
     ],
 
+    'base_api_ai' => env('BASE_API_AI')
+
 ];

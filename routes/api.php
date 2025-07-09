@@ -88,8 +88,8 @@ Route::get('import-loto-number', function () {
 });
 
 
-Route::get('lottery-result', [LotteryResultController::class, 'lotteryResult']);
-Route::get('base-statis', [StatisticsController::class, 'baseStatis']);
-Route::get('ai-prediction-special-prize', [StatisticsController::class, 'AiPredictionSpecialPrize']);
+Route::get('lottery-result', [LotteryResultController::class, 'lotteryResult'])->name('lotteryResult');
+Route::get('base-statis', [StatisticsController::class, 'baseStatis'])->name('baseStatis');
+Route::get('ai-prediction-special-prize', [StatisticsController::class, 'AiPredictionSpecialPrize'])->name('AiPredictionSpecialPrize');
 
 Route::post('new-lottery-results', [LotteryResultController::class, 'insertLotteryResult']);

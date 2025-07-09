@@ -246,7 +246,8 @@
             <!-- Quick Stats -->
 
             <div class="mt-3">
-                <h3 class="mb-3"><i class="fas fa-robot"></i> Lịch sử dự đoán giải đặc biệt (10 số/ngày) của AI và kết quả đối chiếu thực tế cách đây 10 ngày</h3>
+                <h3 class="mb-3"><i class="fas fa-robot"></i> Lịch sử dự đoán giải đặc biệt (10 số/ngày) của AI và kết
+                    quả đối chiếu thực tế cách đây 10 ngày</h3>
                 <div class="quick-stats">
                     <div class="stat-card">
                         <div class="stat-number" id="accuracy-percent">100%</div>
@@ -261,7 +262,8 @@
                         <div class="stat-label">Chuỗi ngày đoán đúng liên tiếp</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number"><button class="cursor-pointer" id="openHistoryModal"><i class="fas fa-eye"></i></button></div>
+                        <div class="stat-number"><button class="cursor-pointer" id="openHistoryModal"><i
+                                    class="fas fa-eye"></i></button></div>
                         <div class="stat-label">Lịch sử dự đoán</div>
                     </div>
                 </div>
@@ -356,34 +358,27 @@
         </section>
     </div>
 
-    <div id="historyModal" class="relative z-10 hidden" aria-labelledby="history-title" role="dialog"
-        aria-modal="true">
-        <div class="fixed inset-0 bg-gray-500/75 transition-opacity ease-out duration-300 opacity-0" aria-hidden="true"
-            id="historyBackdrop"></div>
-
+    <div id="history-modal" class="inset-0 bg-gray-500/75 z-10">
         <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
             <div class="flex min-h-full items-center justify-center p-4">
-                <div id="historyPanel"
-                    class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all ease-out duration-300 opacity-0 translate-y-4 sm:scale-95 w-full max-w-6xl">
-                    <!-- Header -->
-                    <div class="header-background-modal px-6 py-4">
+                <div
+                    class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all w-full max-w-6xl">
+                    <div class="header-background-modal px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-800 text-white">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center">
                                 <div
                                     class="flex-shrink-0 w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                                    <svg class="w-6 h-6 033" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
                                 </div>
                                 <div class="ml-4">
-                                    <h3 class="text-lg font-semibold text-white" id="history-title">Lịch Sử Dự Đoán AI
-                                    </h3>
+                                    <h3 class="text-lg font-semibold">Lịch Sử Dự Đoán AI</h3>
                                     <p class="text-blue-100 text-sm">Kết quả dự đoán 10 ngày gần nhất</p>
                                 </div>
                             </div>
-                            <button class="btn-close" class="text-white/80 hover:text-white transition-colors">
+                            <button id="close-history-modal" class="text-white/80 hover:text-white">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M6 18L18 6M6 6l12 12"></path>
@@ -391,28 +386,17 @@
                             </button>
                         </div>
                     </div>
-
-                    <!-- Content -->
-                    <div class="max-h-[70vh] overflow-y-auto">
-                        <div id="historyContent" class="p-6">
-                            <!-- Content will be populated by JavaScript -->
-                        </div>
+                    <div id="history-content" class="max-h-[70vh] overflow-y-auto p-6">
+                        <!-- History items will be inserted here -->
                     </div>
-
-                    <!-- Footer -->
                     <div class="bg-gray-50 px-6 py-4 border-t">
-                        <div class="flex justify-between items-center">
-                            <button
-                                class="btn-close inline-flex items-center px-3 py-2 text-sm rounded-md bg-primary-gradient color-muted">
-                                Đóng
-                            </button>
-                        </div>
+                        <button id="close-history-modal-footer"
+                            class="btn-close inline-flex items-center px-3 py-2 text-sm rounded-md bg-blue-500 text-white">Đóng</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
     <script>
         window.addEventListener('DOMContentLoaded', () => {
             lotteryDrawing.init();
@@ -1123,7 +1107,9 @@
                 element.addEventListener('click', () => historyModal.close());
             })
 
-            historyModal.backdrop.addEventListener('click', () => {if (historyModal.isOpen) historyModal.close();})
+            historyModal.backdrop.addEventListener('click', () => {
+                if (historyModal.isOpen) historyModal.close();
+            })
 
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {

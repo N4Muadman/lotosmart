@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Events\LotteryResultSent;
+use App\Jobs\AiPredictionForNextDrawJob;
+use App\Jobs\AiPredictionXSMBJob;
+use App\Jobs\AiPredictionXSMNJob;
+use App\Jobs\AiPredictionXSMTJob;
 use App\Models\LotteryResult;
 use App\Service\LotoNumberService;
 use App\Service\LotteryResultService;
@@ -54,6 +58,8 @@ class LotteryResultController extends Controller
             '*.region' => 'required|string'
         ]);
 
+        Log::info($data);
+
         $date = now();
         $newNumberData = [];
         foreach ($data as $station) {
@@ -64,10 +70,19 @@ class LotteryResultController extends Controller
                 'prizes' => $new_lottery->getAllNumbers(),
             ];
 
-            if ($new_lottery->region == 'XSMB' && $new_lottery->getAllNumbers()->count() == 27) {
-                $this->loto_number_service->processNewResult($new_lottery);
-            }else if ($new_lottery->getAllNumbers()->count() == 18){
-                $this->loto_number_service->processNewResult($new_lottery);
+            $this->loto_number_service->processNewResult($new_lottery);
+
+            $count = $new_lottery->getAllNumbers()->count();
+            switch (true) {
+                case $new_lottery->region === 'XSMB' && $count === 27:
+                    AiPredictionForNextDrawJob::dispatch('XSMB');
+                    break;
+                case $new_lottery->region === 'XSMN' && $count === 18:
+                    AiPredictionForNextDrawJob::dispatch('XSMN');
+                    break;
+                case $new_lottery->region === 'XSMT' && $count === 18:
+                    AiPredictionForNextDrawJob::dispatch('XSMT');
+                    break;
             }
         }
 
@@ -75,17 +90,18 @@ class LotteryResultController extends Controller
         return response()->json([$newNumberData], 200);
     }
 
-    private function handleDate($region, $date){
-        switch ($region){
+    private function handleDate($region, $date)
+    {
+        switch ($region) {
             case 'XSMB':
                 return $date ? $date : (now()->lt(today()->setTime(18, 15)) ? now()->subDay() : today())->format('Y-m-d');
-                break ;
+                break;
             case 'XSMN':
                 return $date ? $date : (now()->lt(today()->setTime(16, 15)) ? now()->subDay() : today())->format('Y-m-d');
-                break ;
+                break;
             case 'XSMT':
                 return $date ? $date : (now()->lt(today()->setTime(17, 15)) ? now()->subDay() : today())->format('Y-m-d');
-                break ;
+                break;
         }
     }
 }
