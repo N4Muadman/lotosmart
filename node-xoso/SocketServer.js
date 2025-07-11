@@ -115,8 +115,17 @@ function connectWebSocket() {
                 while ((match = stationPattern.exec(cleanedText)) !== null) {
                     const [, , code, short, province, prizeData] = match;
 
-                    const rawPrizes = prizeData.split('|').filter(p => p !== '');
-                    const prizes = rawPrizes.map(prize => prize.includes('-') ? prize.split('-') : [prize]);
+                    const rawPrizes = prizeData.split('|');
+                    const prizes = rawPrizes.map(prize => {
+                        if (prize === '') {
+                            return [];
+                        } else if (prize.includes('-')) {
+                            return prize.split('-').filter(p => p !== '');
+                        } else {
+                            // Nếu không có dấu - thì trả về mảng chứa 1 phần tử
+                            return [prize];
+                        }
+                    });
 
                     results.push({
                         region,
@@ -196,7 +205,7 @@ function connectWebSocket() {
                 // Vẫn trong khung giờ xổ số, thử kết nối lại
                 if (reconnectAttempts < maxReconnectAttempts) {
                     reconnectAttempts++;
-                    console.log(`⏰ Đang thử kết nối lại sau ${reconnectDelay/1000} giây... (Lần thử: ${reconnectAttempts}/${maxReconnectAttempts})`);
+                    console.log(`⏰ Đang thử kết nối lại sau ${reconnectDelay / 1000} giây... (Lần thử: ${reconnectAttempts}/${maxReconnectAttempts})`);
 
                     reconnectTimer = setTimeout(() => {
                         connectWebSocket();

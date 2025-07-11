@@ -13,15 +13,15 @@ class LotteryResultService
             return LotteryResult::UpdateOrCreate(
                 ['region' => $region, 'draw_date' => $date->toDateString(), 'province' => $province],
                 [
-                    'special_prize' => $prizes[7] ?? null,
-                    'first_prize' => $prizes[0] ?? null,
-                    'second_prize' => $prizes[1] ?? null,
-                    'third_prize' => $prizes[2] ?? null,
-                    'fourth_prize' => $prizes[3] ?? null,
-                    'fifth_prize' => $prizes[4] ?? null,
-                    'sixth_prize' => $prizes[5] ?? null,
-                    'seventh_prize' => $prizes[6] ?? null,
-                    'eighth_prize' => $prizes[8] ?? null,
+                    'special_prize' => $prizes[0] ?? null,
+                    'first_prize' => $prizes[1] ?? null,
+                    'second_prize' => $prizes[2] ?? null,
+                    'third_prize' => $prizes[3] ?? null,
+                    'fourth_prize' => $prizes[4] ?? null,
+                    'fifth_prize' => $prizes[5] ?? null,
+                    'sixth_prize' => $prizes[6] ?? null,
+                    'seventh_prize' => $prizes[7] ?? null,
+                    'special_code' => $prizes[8] ?? null,
                 ]
             );
         } else{
