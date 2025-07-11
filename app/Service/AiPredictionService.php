@@ -39,7 +39,7 @@ class AiPredictionService
         $lotoNumberByDate = $lotoNumberQuery->get()
             ->keyBy('draw_date');
 
-        $aiPredictions = $aiPredictionQuery->whereBetween('prediction_date', [$date->copy()->subDay(10), $date])
+        $aiPredictions = $aiPredictionQuery->whereBetween('prediction_date', [$date->copy()->subDay(10), $date])->orderByDesc('prediction_date')
             ->get();
 
         $stats = collect($aiPredictions)->map(function ($prediction) use ($lotoNumberByDate) {
