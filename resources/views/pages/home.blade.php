@@ -306,6 +306,7 @@
                         max_streak: specialPrize.max_streak || 0
                     };
                     this.data.predictionHistory = Object.values(specialPrize.stats || {});
+                    this.renderHistoryModal();
                 } catch (error) {
                     this.showToast('Không thể tải dữ liệu dự đoán AI', 'error');
                     console.error(error);
@@ -582,7 +583,6 @@
                         <div class="stat-label">Chuỗi ngày đoán đúng liên tiếp</div>
                     </div>
                 `;
-                document.getElementById('open-history-modal').addEventListener('click', () => this.openHistoryModal());
             },
 
             renderHeatmap() {
