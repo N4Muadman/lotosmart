@@ -36,14 +36,20 @@
                     <!-- Lottery Results and Statistics will be dynamically inserted here -->
                 </div>
 
-                <!-- Quick Stats -->
+
+                <div id="ai-prediction">
+
+                </div>
+
+            </section>
+            <section class="live-ticker slide-in bg-white shadow rounded-lg p-6">
                 <div class="mt-6">
                     <h3 class="mb-3 text-lg"><i class="fas fa-robot"></i> Lịch sử dự đoán giải đặc biệt (10 số/ngày) của AI và kết quả đối chiếu thực tế cách đây 10 ngày</h3>
-                    <div id="quick-stats" class="quick-stats grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                    <div id="quick-stats-special-prize" class="quick-stats grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                         <!-- Quick stats will be inserted here -->
                     </div>
 
-                    <div class="mb-3 relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all w-full">
+                    <div class="mb-6 relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all w-full">
                         <div class="header-background-modal px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-800 text-white">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center">
@@ -64,10 +70,10 @@
                         </div>
                     </div>
 
-                    <h3 class="mb-3 text-lg"><i class="fas fa-robot"></i> Kết quả dự đoán tất cả giải (10 số/ngày) của AI và kết quả đối chiếu thực tế của ngày hôm nay</h3>
-                    {{-- <div id="quick-stats" class="quick-stats grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                    <h3 class="mb-3 text-lg"><i class="fas fa-robot"></i> Kết quả dự đoán tất cả giải (10 số/ngày) của AI và kết quả đối chiếu thực tế của lần quay gần nhất</h3>
+                    <div id="quick-stats-all-prize" class="quick-stats grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                         <!-- Quick stats will be inserted here -->
-                    </div> --}}
+                    </div>
                 </div>
             </section>
 
@@ -172,7 +178,12 @@
                 provinceXSTN: [],
                 currentDate: new Date(),
                 region: 'XSMB',
-                aiStats: {
+                aiStatsAllPrize: {
+                    accuracy_percent: 0,
+                    numberPrediction: [],
+                    numberCorrectPredictions: []
+                },
+                aiStatsSpecialPrize: {
                     accuracy_percent: 0,
                     latest_hit: null,
                     max_streak: 0
@@ -193,10 +204,7 @@
                 toasts: [],
                 toastId: 0,
                 aiPredictions: [
-                    { title: 'Bạch thủ lô XSMB', numbers: [47], confidence: 87 },
-                    { title: 'Song thủ lô', numbers: [23, 78], confidence: 74 },
-                    { title: '3 càng', numbers: [5, 6, 7], confidence: 65 },
-                    { title: 'Dàn đề 10 số', numbers: [12, 90, 34, 56, 78], confidence: 82, style: { fontSize: '0.7rem' } }
+
                 ]
             },
 
@@ -248,11 +256,11 @@
                     this.fetchLotteryResult(),
                     this.fetchAiPredictionData(),
                     this.fetchStatisticsData(),
+                    this.fetchAiPredictionForNextDraw(),
                 ]);
                 this.renderTickerContent();
                 this.initLotteryDrawing(this.data.filters.region, this.data.filters.date);
                 this.setupSocketConnection();
-                this.renderQuickStats();
                 this.initializeCharts();
             },
 
@@ -294,19 +302,90 @@
                     const params = new URLSearchParams({
                         region: this.data.filters.region
                     });
-                    const response = await fetch(`{{ route('AiPredictionSpecialPrize') }}?${params}`, {
+                    const response = await fetch(`{{ route('AiPredictionStatus') }}?${params}`, {
                         headers: { 'Accept': 'application/json' }
                     });
                     if (!response.ok) throw new Error('Failed to fetch AI prediction data');
                     const data = await response.json();
                     const specialPrize = data.special_prize;
-                    this.data.aiStats = {
+                    const allPrize = data.all_prize;
+
+                    this.data.aiStatsSpecialPrize = {
                         accuracy_percent: specialPrize.accuracy_percent || 0,
                         latest_hit: specialPrize.latest_hit || null,
                         max_streak: specialPrize.max_streak || 0
                     };
                     this.data.predictionHistory = Object.values(specialPrize.stats || {});
-                    this.renderHistoryModal();
+                    this.data.aiStatsAllPrize = {
+                        accuracy_percent: allPrize.accuracy || '0%',
+                        numberPrediction: Object.values(allPrize.prediction || {}),
+                        numberCorrectPredictions: Object.values(allPrize.correct_loto_number || {})
+                    }
+                    this.renderQuickStats();
+                } catch (error) {
+                    this.showToast('Không thể tải dữ liệu dự đoán AI', 'error');
+                    console.error(error);
+                }
+            },
+
+            async fetchAiPredictionForNextDraw(addNumber = null) {
+                try {
+                    this.data.aiPredictions = [];
+
+                    const params = new URLSearchParams({
+                        region: this.data.filters.region,
+                        add_number: addNumber
+                    });
+
+                    const response = await fetch(`{{ route('getAiPredictionForNextDraw') }}?${params}`, {
+                        headers: { 'Accept': 'application/json' },
+                        credentials: 'same-origin'
+                    });
+
+                    if (!response.ok) throw new Error('Failed to fetch AI prediction data');
+                    const data = await response.json();
+
+                    const items = [
+                        {
+                            data: data.so_de?.all_numbers,
+                            title: 'Dàn đề 10 số',
+                            param: 'show-de'
+                        },
+                        {
+                            data: data.so_de?.kep_numbers,
+                            title: 'Đề kép hôm nay',
+                            param: 'show-de'
+                        },
+                        {
+                            data: data.so_lo?.all_numbers,
+                            title: 'Dàn lô 10 số',
+                            param: 'show-lo'
+                        },
+                        {
+                            data: data.so_lo?.kep_numbers,
+                            title: 'Dự đoán lô kép',
+                            param: 'show-lo'
+                        },
+                        {
+                            data: data.so_lo?.xien_2,
+                            title: 'Dự đoán cặp lô xiên',
+                            param: 'show-xien'
+                        }
+                    ];
+
+                    items.forEach(item => {
+                        if (Array.isArray(item.data) && item.data.length > 0) {
+                            this.data.aiPredictions.push({
+                                title: item.title,
+                                numbers: item.data,
+                                confidence: this.randomConfidence(),
+                                param: item.param
+                            });
+                        }
+                    });
+
+                    this.renderPrediction();
+
                 } catch (error) {
                     this.showToast('Không thể tải dữ liệu dự đoán AI', 'error');
                     console.error(error);
@@ -359,6 +438,9 @@
                 await this.fetchAiPredictionData();
                 this.renderTickerContent();
                 await this.initLotteryDrawing(this.data.filters.region, this.data.filters.date, this.data.provinceXSTN);
+            },
+            randomConfidence(min = 60, max = 95) {
+                return Math.floor(Math.random() * (max - min + 1)) + min;
             },
 
             getPrizeNumbers(prize) {
@@ -489,7 +571,7 @@
                                     <div class="result-numbers flex gap-2 my-2">
                                         <div>Đầu ${i}: </div>
                                         ${this.getLotoByHead(this.data.lotoNumbersXSMB, i).map(({ item, index }) => `
-                                            <div class="number-ball p-2 bg-gray-100 rounded ${index === 26 ? 'bg-red text-white' : ''}">
+                                            <div class="number-ball text-white p-2 bg-gray-100 rounded ${index === 26 ? 'bg-red text-white' : ''}">
                                                 ${item}
                                             </div>
                                         `).join('')}
@@ -527,7 +609,7 @@
                                         <div class="result-numbers flex gap-2 my-2">
                                             <div>Đầu ${i}: </div>
                                             ${this.getLotoByHead(it.loto ,i)? this.getLotoByHead(it.loto ,i).map(({ item, index }) => `
-                                                <div class="number-ball p-2 bg-gray-100 rounded ${index === 17 ? 'bg-red text-white' : ''}">
+                                                <div class="number-ball text-white p-2 bg-gray-100 rounded ${index === 17 ? 'bg-red text-white' : ''}">
                                                     ${item ?? ''}
                                                 </div>
                                             `).join('') : ''}
@@ -539,66 +621,109 @@
                     `;
                 }
 
-                html += `
-                        <div class="predictions mt-4">
-                            <h3 class="mb-3 text-lg font-semibold"><i class="fas fa-robot"></i> Dự đoán AI cho lần quay tiếp theo</h3>
-                            <div class="prediction-cards grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                ${this.data.aiPredictions.map(prediction => `
-                                    <div class="prediction-card p-4 bg-gray-50 rounded shadow">
-                                        <div class="prediction-title font-medium">${prediction.title}</div>
-                                        <div class="prediction-numbers flex gap-2 my-2">
-                                            ${prediction.numbers.map(number => `
-                                                <div class="number-ball p-2 bg-gray-100 rounded" style="${prediction.style ? `font-size:${prediction.style.fontSize}` : ''}">
-                                                    ${number}
-                                                </div>
-                                            `).join('')}
-                                        </div>
-                                        <div class="confidence-bar h-2 bg-gray-200 rounded">
-                                            <div class="confidence-fill h-2 bg-blue-500 rounded" style="width:${prediction.confidence}%"></div>
-                                        </div>
-                                        <small>Độ tin cậy: ${prediction.confidence}%</small>
-                                    </div>
-                                `).join('')}
+                content.innerHTML = html;
+            },
+
+            renderPrediction() {
+                const predictions = this.data.aiPredictions || [];
+                const html = `
+                    <div class="bg-white shadow-lg rounded-lg p-6 mb-8">
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-robot text-xl ai-icon"></i>
+                                </div>
+                                <div>
+                                    <h2 class="text-2xl font-bold text-gray-800">Dự đoán AI</h2>
+                                    <p class="text-gray-600">Cho lần quay tiếp theo</p>
+                                </div>
                             </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+                            ${predictions.length == 0 ? '<p class="text-center col-span-full">Chưa có kết quả dự đoán</p>' : predictions.map((pred, index) => `
+                                <div class="prediction-card bg-gradient-to-br from-${['red','blue','green','purple'][index]}-50 to-${['red','blue','green','purple'][index]}-100 border-2 border-${['red','blue','green','purple'][index]}-200 rounded-lg p-5">
+                                    <div class="flex items-center space-x-2 mb-3">
+                                        <i class="fas fa-${['crown','dice-two','dice-three','th'][index]} text-${['red','blue','green','purple'][index]}-500 me-3"></i>
+                                        <h3 class="font-bold text-gray-800 me-2">${pred.title}</h3>
+                                        ${pred.confidence > 80 ? `<span class="hot-badge bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">HOT</span>` : ''}
+                                    </div>
+                                    <div class="flex flex-wrap justify-center gap-2 space-x-1 mb-3">
+                                        ${pred.numbers.map(num => Array.isArray(num) ? `<div class="px-3 py-1 text-white font-bold rounded-xl bg-primary-gradient shadow-md">${num}</div>` : `<div class="number-ball rounded-full flex text-white items-center justify-center shadow-md">${num}</div>`).join('')}
+                                        ${pred.numbers.length == 2 ? `<div data-param="${pred.param}" class="number-ball cursor-pointer rounded-full text-white flex items-center justify-center add-number shadow-md">+</div>` : ''}
+                                    </div>
+                                    <div class="confidence-bar h-3 bg-${['red','blue','green','purple'][index]}-200 rounded-full mb-2">
+                                        <div class="confidence-fill h-3 bg-${['red','blue','green','purple'][index]}-500 rounded-full" style="width: ${pred.confidence}%"></div>
+                                    </div>
+                                    <div class="text-center text-sm font-medium text-gray-700">
+                                        Độ tin cậy: <span class="text-${['red','blue','green','purple'][index]}-600 font-bold">${pred.confidence}%</span>
+                                    </div>
+                                </div>
+                            `).join('')}
                         </div>
                     </div>
                 `;
 
-                content.innerHTML = html;
+                document.getElementById('ai-prediction').innerHTML = html;
+
+                document.querySelectorAll('.add-number').forEach(element => {
+                    element.addEventListener('click', async (e) => {
+                        const param = element.dataset.param;
+                        await this.fetchAiPredictionForNextDraw(param);
+                    });
+                })
             },
 
             renderQuickStats() {
-                const stats = document.getElementById('quick-stats');
+                const stats = document.getElementById('quick-stats-special-prize');
                 stats.innerHTML = `
+                        <div class="stat-card p-4 bg-gray-50 rounded shadow text-center">
+                            <div class="stat-number text-2xl font-bold">${this.data.aiStatsSpecialPrize.accuracy_percent}%</div>
+                            <div class="confidence-bar h-2 bg-gray-200 rounded">
+                                <div class="confidence-fill h-2 bg-blue-500 rounded" style="width:${this.data.aiStatsSpecialPrize.accuracy_percent}%"></div>
+                            </div>
+                            <div class="stat-label mt-2">Độ chính xác của AI</div>
+                        </div>
+                        <div class="stat-card p-4 bg-gray-50 rounded shadow text-center">
+                            <div class="stat-number text-2xl font-bold">${this.data.aiStatsSpecialPrize.latest_hit?.date || 'N/A'}</div>
+                            <div class="stat-label">Ngày đoán đúng gần nhất</div>
+                        </div>
+                        <div class="stat-card p-4 bg-gray-50 rounded shadow text-center">
+                            <div class="stat-number text-2xl font-bold">${this.data.aiStatsSpecialPrize.max_streak || 0}</div>
+                            <div class="stat-label">Chuỗi ngày đoán đúng liên tiếp</div>
+                        </div>
+                    `;
+
+                document.getElementById('quick-stats-all-prize').innerHTML = `
                     <div class="stat-card p-4 bg-gray-50 rounded shadow text-center">
-                        <div class="stat-number text-2xl font-bold">${this.data.aiStats.accuracy_percent}%</div>
-                        <div class="stat-label">Độ chính xác của AI</div>
+                        <div class="stat-number text-2xl font-bold">${this.data.aiStatsAllPrize.accuracy_percent}</div>
+                        <div class="confidence-bar h-2 bg-gray-200 rounded">
+                            <div class="confidence-fill h-2 bg-blue-500 rounded" style="width:${this.data.aiStatsAllPrize.accuracy_percent}"></div>
+                        </div>
+                        <div class="stat-label mt-2">Độ chính xác của AI</div>
                     </div>
                     <div class="stat-card p-4 bg-gray-50 rounded shadow text-center">
-                        <div class="stat-number text-2xl font-bold">${this.data.aiStats.latest_hit?.date || 'N/A'}</div>
-                        <div class="stat-label">Ngày đoán đúng gần nhất</div>
+                        <div class="prediction-numbers flex flex-wrap gap-2 my-2 justify-center">
+                        ${
+                            this.data.aiStatsAllPrize.numberPrediction?.length
+                            ? this.data.aiStatsAllPrize.numberPrediction.map(it => `<div class="number-ball text-white p-2 bg-gray-100 rounded">${it}</div>`).join('')
+                            : '<span class="font-bold">Chưa có dự đoán của AI</span>'
+                        }
+                        </div>
+                        <div class="stat-label">Số AI dự đoán</div>
                     </div>
                     <div class="stat-card p-4 bg-gray-50 rounded shadow text-center">
-                        <div class="stat-number text-2xl font-bold">${this.data.aiStats.max_streak || 0}</div>
-                        <div class="stat-label">Chuỗi ngày đoán đúng liên tiếp</div>
+                        <div class="prediction-numbers flex flex-wrap gap-2 my-2 justify-center">
+                        ${
+                            this.data.aiStatsAllPrize.numberCorrectPredictions?.length
+                            ? this.data.aiStatsAllPrize.numberCorrectPredictions.map(it => `<div class="flex items-center gap-1"><div class="number-ball text-white p-2 bg-gray-100 rounded">${it.loto_number} </div> <div>(${it.count} nháy)</div></div>`).join('')
+                            : '<span class="font-bold">Chưa có dự đoán của AI</span>'
+                        }
+                        </div>
+                        <div class="stat-label">Những số AI dự đoán đúng</div>
                     </div>
                 `;
-            },
 
-            renderHeatmap() {
-                const heatmap = document.getElementById('heatmap-grid');
-                heatmap.innerHTML = '';
-                for (let i = 0; i < 100; i++) {
-                    const number = this.formatNumber(i);
-                    const cell = document.createElement('div');
-                    cell.className = `heatmap-cell cursor-pointer p-2 text-center rounded ${this.data.selectedNumbers.includes(number) ? 'selected' : ''}`;
-                    cell.textContent = number;
-                    cell.addEventListener('click', () => this.toggleNumber(number));
-                    heatmap.appendChild(cell);
-                }
-            },
-
-            renderHistoryModal() {
                 const content = document.getElementById('history-content');
                 content.innerHTML = this.data.predictionHistory.map((item, index) => `
                     <div class="border rounded-lg p-6 mb-4 transition-all hover:shadow-md ${item.hit > 0 ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-white'}">
@@ -639,6 +764,19 @@
                         </div>
                     </div>
                 `).join('');
+            },
+
+            renderHeatmap() {
+                const heatmap = document.getElementById('heatmap-grid');
+                heatmap.innerHTML = '';
+                for (let i = 0; i < 100; i++) {
+                    const number = this.formatNumber(i);
+                    const cell = document.createElement('div');
+                    cell.className = `heatmap-cell cursor-pointer text-white p-2 text-center rounded ${this.data.selectedNumbers.includes(number) ? 'selected' : ''}`;
+                    cell.textContent = number;
+                    cell.addEventListener('click', () => this.toggleNumber(number));
+                    heatmap.appendChild(cell);
+                }
             },
 
             renderToasts() {

@@ -16,7 +16,7 @@
     --bg-secondary: #1e1e3c;
     --bg-card: rgba(0, 51, 51, 0.05);
     --bg-header: rgba(0, 51, 51, 0.95);
-    --bg-disabled: rgb(217, 217, 217);
+    --bg-disabled: rgb(251, 238, 238);
 
     /* Màu chữ */
     --text-primary: rgba(0, 51, 51, 0.9);
@@ -892,7 +892,7 @@ body {
         right: 20px;
         left: 20px;
         height: 70vh;
-        bottom: 90px;
+        bottom: 10px;
     }
 
     .auth-buttons {

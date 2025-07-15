@@ -4,9 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Events\LotteryResultSent;
 use App\Jobs\AiPredictionForNextDrawJob;
-use App\Jobs\AiPredictionXSMBJob;
-use App\Jobs\AiPredictionXSMNJob;
-use App\Jobs\AiPredictionXSMTJob;
 use App\Models\LotteryResult;
 use App\Service\LotoNumberService;
 use App\Service\LotteryResultService;
@@ -92,16 +89,29 @@ class LotteryResultController extends Controller
 
     private function handleDate($region, $date)
     {
+        if ($date) {
+            return $date;
+        }
+
+        $now = now();
+        $today = today();
+
         switch ($region) {
             case 'XSMB':
-                return $date ? $date : (now()->lt(today()->setTime(18, 15)) ? now()->subDay() : today())->format('Y-m-d');
+                $cutoff = $today->setTime(18, 30);
                 break;
             case 'XSMN':
-                return $date ? $date : (now()->lt(today()->setTime(16, 15)) ? now()->subDay() : today())->format('Y-m-d');
+                $cutoff = $today->setTime(16, 30);
                 break;
             case 'XSMT':
-                return $date ? $date : (now()->lt(today()->setTime(17, 15)) ? now()->subDay() : today())->format('Y-m-d');
+                $cutoff = $today->setTime(17, 30);
                 break;
+            default:
+                $cutoff = $today->setTime(18, 30);
         }
+
+        $dateToUse = $now->lt($cutoff) ? $now->subDay() : $today;
+
+        return $dateToUse->format('Y-m-d');
     }
 }

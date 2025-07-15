@@ -87,25 +87,29 @@ class AiPredictionService
 
     public function AiPredictionAllPrizeByDate($region, $province, $date)
     {
-        $aiPredictions = AiPrediction::whereDate('prediction_date', $date)->byType('so_lo')->byRegion($region)->get();
-        $statis = collect($aiPredictions)->map(function ($prediction) {
-            $correct_loto_number_prediction = LotoNumber::SelectRaw('loto_number, count(loto_number) as count')
-                ->where('region', $prediction->region)
-                ->where('draw_date', $prediction->prediction_date)
-                ->whereIn('loto_number', $prediction->numbers)
-                ->where('province', $prediction->province)
+        $aiPredictions = AiPrediction::whereDate('prediction_date', $date)->byType('so_lo')->byRegion($region)->first();
+
+        $statis = null;
+
+        if ($aiPredictions) {
+            $correct_loto_number_prediction = LotoNumber::selectRaw('loto_number, count(loto_number) as count')
+                ->where('region', $aiPredictions->region)
+                ->where('draw_date', $aiPredictions->prediction_date)
+                ->whereIn('loto_number', $aiPredictions->numbers)
                 ->groupBy('loto_number')
                 ->get();
 
-            return [
-                'prediction' => $prediction->numbers,
-                'date' => $prediction->prediction_date->format('Y-m-d'),
-                'region' => $prediction->region,
-                'province' => $prediction->province,
+            $statis = [
+                'prediction' => $aiPredictions->numbers,
+                'date' => $aiPredictions->prediction_date->format('Y-m-d'),
+                'region' => $aiPredictions->region,
+                'province' => $aiPredictions->province,
                 'correct_loto_number' => $correct_loto_number_prediction,
-                'accuracy' => count($prediction->numbers) > 0 ? round(count($correct_loto_number_prediction) / count($prediction->numbers) * 100, 2) . '%' : '0%',
+                'accuracy' => count($aiPredictions->numbers) > 0
+                    ? round(count($correct_loto_number_prediction) / count($aiPredictions->numbers) * 100, 2) . '%'
+                    : '0%',
             ];
-        });
+        }
 
         return $statis;
     }
@@ -142,7 +146,7 @@ class AiPredictionService
                     "6" => $lt->sixth_prize,
                     "7" => $lt->seventh_prize,
                 ];
-            }else{
+            } else {
                 $lotteryToday['special_prize'][] = $lt->special_prize[0];
                 $lotteryToday['all_results'][$lt->region] = [
                     "ĐB" => $lt->special_prize,
@@ -221,5 +225,134 @@ class AiPredictionService
 
         Log::info('Thêm dữ liệu thành công');
         return;
+    }
+
+    public function getAiPredictionForNextDraw($request)
+    {
+        if ($request->add_number == 'show-lo') {
+            session(['show_lo' => true]);
+        }
+        if ($request->add_number == 'show-de') {
+            session(['show_de' => true]);
+        }
+        if ($request->add_number == 'show-xien') {
+            session(['show_xien' => true]);
+        }
+
+        Log::info('show_de ' .session('show_de'). 'show_lo ' .session('show_lo'). 'show_xien '.session('show_xien'));
+
+        $region = $request->filled('region') ? $request->region : 'XSMB';
+        $date = $this->handleDate($region);
+
+        $predictionQuery = AiPrediction::where('region', $region)->where('prediction_date', $date);
+
+        $prediction_lo = (clone $predictionQuery)->where('prediction_type', 'so_lo')->first();
+        $prediction_de = (clone $predictionQuery)->where('prediction_type', 'so_de')->first();
+
+        $number_lo = [];
+        $number_de = [];
+        if ($prediction_lo) {
+            $number_lo = $this->generateNumberPrediction(session('show_lo'), $prediction_lo->numbers);
+            $number_lo['xien_2'] = $this->generateXienCombinations($prediction_lo->numbers, 2, session('show_xien', false));
+        }
+        if ($prediction_de) {
+            $number_de = $this->generateNumberPrediction(session('show_de'), $prediction_de->numbers);
+        }
+
+        return [
+            'so_lo' => $number_lo,
+            'so_de' => $number_de,
+        ];
+    }
+
+    private function generateNumberPrediction($show, $numbers)
+    {
+        $kep_numbers = array_filter($numbers, function ($num) {
+            if (strlen($num) !== 2) {
+                return false;
+            }
+
+            return $num[0] === $num[1];
+        });
+
+        if ($show) {
+            return [
+                'all_numbers' => $numbers,
+                'kep_numbers' => array_values($kep_numbers),
+            ];
+        } else {
+            return [
+                'all_numbers' => array_slice($numbers, 0, 2),
+                'kep_numbers' => array_slice($kep_numbers, 0, 2),
+            ];
+        }
+    }
+
+    private function generateXienCombinations(array $numbers, int $size, bool $show): array
+    {
+        if ($size > count($numbers)) {
+            return [];
+        }
+
+        $combinations = [];
+        $indices = range(0, count($numbers) - 1);
+
+        foreach ($this->getCombinations($indices, $size) as $combination) {
+            $combo = [];
+            foreach ($combination as $index) {
+                $combo[] = str_pad($numbers[$index], 2, '0', STR_PAD_LEFT);
+            }
+            $combinations[] = $combo;
+        }
+
+        return $show ? array_slice($combinations, 0, 5) : array_slice($combinations, 0, 2);
+    }
+
+    private function getCombinations(array $array, int $size): array
+    {
+        if ($size == 0) {
+            return [[]];
+        }
+
+        if (count($array) == 0) {
+            return [];
+        }
+
+        $combinations = [];
+        $first = array_shift($array);
+
+        foreach ($this->getCombinations($array, $size - 1) as $combination) {
+            $combinations[] = array_merge([$first], $combination);
+        }
+
+        foreach ($this->getCombinations($array, $size) as $combination) {
+            $combinations[] = $combination;
+        }
+
+        return $combinations;
+    }
+
+    private function handleDate($region)
+    {
+        $now = now();
+        $today = today();
+
+        switch ($region) {
+            case 'XSMB':
+                $cutoff = $today->setTime(18, 30);
+                break;
+            case 'XSMN':
+                $cutoff = $today->setTime(16, 30);
+                break;
+            case 'XSMT':
+                $cutoff = $today->setTime(17, 30);
+                break;
+            default:
+                // fallback: mặc định giống XSMB
+                $cutoff = $today->setTime(18, 30);
+        }
+
+        $date = $now->lt($cutoff) ? $today : $now->addDay();
+        return $date->format('Y-m-d');
     }
 }

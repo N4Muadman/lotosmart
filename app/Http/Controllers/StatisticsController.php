@@ -25,7 +25,7 @@ class StatisticsController extends Controller
         return response()->json($stats, 200);
     }
 
-    public function AiPredictionSpecialPrize(Request $request)
+    public function AiPredictionStatus(Request $request)
     {
         $region = $request->filled('region') ? $request->region : 'XSMB';
         $province = $request->filled('province') ? $request->region : null;
