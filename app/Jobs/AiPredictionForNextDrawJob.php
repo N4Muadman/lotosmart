@@ -26,21 +26,21 @@ class AiPredictionForNextDrawJob implements ShouldQueue
         $init = match ($this->region){
             'XSMB' => [
                 'region' => 'XSMB',
-                'api_add' => '/add-bac',
-                'api_get_lo' => '/lo-mien-bac',
-                'api_get_de' => '/de-mien-bac'
+                'api_add' => 'add-bac',
+                'api_get_lo' => 'lo-mien-bac',
+                'api_get_de' => 'de-mien-bac'
             ],
             'XSMN' => [
                 'region' => 'XSMN',
-                'api_add' => '/add-nam',
-                'api_get_lo' => '/lo-mien-nam',
-                'api_get_de' => '/de-mien-nam'
+                'api_add' => 'add-nam',
+                'api_get_lo' => 'lo-mien-nam',
+                'api_get_de' => 'de-mien-nam'
             ],
             'XSMT' => [
                 'region' => 'XSMT',
-                'api_add' => '/add-trung',
-                'api_get_lo' => '/lo-mien-trung',
-                'api_get_de' => '/de-mien-trung'
+                'api_add' => 'add-trung',
+                'api_get_lo' => 'lo-mien-trung',
+                'api_get_de' => 'de-mien-trung'
             ],
         };
 

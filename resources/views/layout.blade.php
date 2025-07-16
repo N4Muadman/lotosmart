@@ -76,7 +76,6 @@
         </div>
     </footer>
 
-    <!-- AI Chatbot -->
     <div class="chatbot-container" id="chatbot">
         <div class="chatbot-header">
             <i class="fas fa-robot"></i>
@@ -86,15 +85,7 @@
             </button>
         </div>
         <div class="chatbot-messages" id="chatbotMessages">
-            <div class="bot-message">
-                <div class="message-avatar">
-                    <i class="fas fa-robot"></i>
-                </div>
-                <div class="message-content">
-                    Xin chào! Tôi là AI Assistant của LotoSmart. Tôi có thể giúp bạn phân tích dữ liệu và đưa ra dự đoán
-                    thông minh. Bạn cần hỗ trợ gì?
-                </div>
-            </div>
+            <!-- Messages will be loaded here -->
         </div>
         <div class="chatbot-input">
             <input type="text" id="chatbotInput" placeholder="Nhập câu hỏi của bạn...">
@@ -118,6 +109,39 @@
             initializeMobileMenu();
         })
 
+        let chatHistory = [];
+
+        // Load chat history from storage
+        function loadChatHistory() {
+            try {
+                const stored = localStorage.getItem('chatHistory');
+                if (stored) {
+                    chatHistory = JSON.parse(stored);
+                }
+            } catch (e) {
+                // If storage fails, use in-memory storage
+                chatHistory = [];
+            }
+        }
+
+        // Save chat history to storage
+        function saveChatHistory() {
+            try {
+                localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+            } catch (e) {
+                // If storage fails, just keep in memory
+                console.log('Storage not available, using in-memory storage');
+            }
+        }
+
+        const suggestions = [
+            "Phân tích số may mắn hôm nay",
+            "Dự đoán XSMB ngày mai",
+            "Tư vấn cầu lô gan lâu",
+            "Xu hướng số đề tuần này",
+            "Thống kê tần suất xuất hiện"
+        ];
+
         function initializeChatbot() {
             const chatbotToggle = document.getElementById('chatbotToggle');
             const chatbotContainer = document.getElementById('chatbot');
@@ -126,50 +150,167 @@
             const chatbotInput = document.getElementById('chatbotInput');
             const chatbotMessages = document.getElementById('chatbotMessages');
 
+            // Load chat history on init
+            loadChatHistory();
+            displayChatHistory();
+
             chatbotToggle.addEventListener('click', () => {
                 chatbotContainer.style.display = chatbotContainer.style.display === 'flex' ? 'none' : 'flex';
+                if (chatbotContainer.style.display === 'flex') {
+                    chatbotInput.focus();
+
+                    chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+                }
             });
 
             chatbotClose.addEventListener('click', () => {
                 chatbotContainer.style.display = 'none';
             });
 
-            function sendMessage() {
-                const message = chatbotInput.value.trim();
-                if (message) {
-                    addMessage(message, 'user');
-                    chatbotInput.value = '';
+            function displayChatHistory() {
+                chatbotMessages.innerHTML = '';
 
-                    // Simulate AI response
-                    setTimeout(() => {
-                        const responses = [
-                            'Dựa trên phân tích dữ liệu, số 47 có khả năng cao xuất hiện trong 3 ngày tới.',
-                            'Tôi đề xuất bạn nên theo dõi cầu lô của số 23, đã gan 12 ngày.',
-                            'Xu hướng hiện tại cho thấy dàn đề 12-34-56 có tỷ lệ thành công 78%.',
-                            'Phân tích AI cho thấy XSMB đang trong chu kỳ số chẵn, hãy cân nhắc kỹ.'
-                        ];
-                        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-                        addMessage(randomResponse, 'bot');
-                    }, 1000);
+                if (chatHistory.length === 0) {
+                    const welcomeMessage = {
+                        message: "Xin chào! Tôi là AI Assistant của LotoSmart. Tôi có thể giúp bạn phân tích dữ liệu và đưa ra dự đoán thông minh. Bạn cần hỗ trợ gì?",
+                        sender: 'bot',
+                        timestamp: new Date().toISOString()
+                    };
+                    addMessageToDOM(welcomeMessage);
+                    showSuggestions();
+                } else {
+                    chatHistory.forEach(msg => {
+                        addMessageToDOM(msg);
+                    });
+
+                    chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
                 }
             }
 
-            function addMessage(message, sender) {
+            function showSuggestions() {
+                const suggestionsContainer = document.createElement('div');
+                suggestionsContainer.className = 'suggestions';
+                suggestionsContainer.innerHTML = '<div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Gợi ý câu hỏi:</div>';
+
+                suggestions.forEach(suggestion => {
+                    const suggestionItem = document.createElement('div');
+                    suggestionItem.className = 'suggestion-item';
+                    suggestionItem.textContent = suggestion;
+                    suggestionItem.addEventListener('click', () => {
+                        chatbotInput.value = suggestion;
+                        sendMessage();
+                    });
+                    suggestionsContainer.appendChild(suggestionItem);
+                });
+
+                chatbotMessages.appendChild(suggestionsContainer);
+                chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+            }
+
+            function removeSuggestions() {
+                const suggestions = chatbotMessages.querySelector('.suggestions');
+                if (suggestions) {
+                    suggestions.remove();
+                }
+            }
+
+            function sendMessage() {
+                const message = chatbotInput.value.trim();
+                if (message && !chatbotSend.disabled) {
+                    // Remove suggestions when user starts chatting
+                    removeSuggestions();
+
+                    // Add user message
+                    const userMessage = {
+                        message: message,
+                        sender: 'user',
+                        timestamp: new Date().toISOString()
+                    };
+
+                    chatHistory.push(userMessage);
+                    addMessageToDOM(userMessage);
+                    saveChatHistory();
+
+                    chatbotInput.value = '';
+                    chatbotSend.disabled = true;
+
+                    // Show typing indicator
+                    showTypingIndicator();
+
+                    // Simulate AI response
+                    setTimeout(() => {
+                        hideTypingIndicator();
+
+                        const responses = [
+                            'Dựa trên phân tích dữ liệu lịch sử, số 47 có khả năng cao xuất hiện trong 3 ngày tới với tỷ lệ 73%.',
+                            'Tôi đề xuất bạn nên theo dõi cầu lô của số 23, đã gan 12 ngày. Thống kê cho thấy đây là thời điểm thuận lợi.',
+                            'Xu hướng hiện tại cho thấy dàn đề 12-34-56 có tỷ lệ thành công 78% dựa trên pattern 30 ngày gần đây.',
+                            'Phân tích AI cho thấy XSMB đang trong chu kỳ số chẵn, hãy cân nhắc kỹ trước khi đầu tư.',
+                            'Theo dữ liệu thống kê, số 89 có chu kỳ xuất hiện 15-18 ngày, hiện tại đã 16 ngày chưa về.',
+                            'Tôi khuyên bạn nên đa dạng hóa các con số thay vì tập trung vào một số duy nhất.'
+                        ];
+
+                        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                        const botMessage = {
+                            message: randomResponse,
+                            sender: 'bot',
+                            timestamp: new Date().toISOString()
+                        };
+
+                        chatHistory.push(botMessage);
+                        addMessageToDOM(botMessage);
+                        saveChatHistory();
+
+                        chatbotSend.disabled = false;
+                        chatbotInput.focus();
+                    }, 1500 + Math.random() * 1000); // Random delay between 1.5-2.5s
+                }
+            }
+
+            function addMessageToDOM(messageObj) {
                 const messageDiv = document.createElement('div');
-                messageDiv.className = `${sender}-message`;
+                messageDiv.className = `${messageObj.sender}-message`;
                 messageDiv.innerHTML = `
                     <div class="message-avatar">
-                        <i class="fas fa-${sender === 'user' ? 'user' : 'robot'}"></i>
+                        <i class="fas fa-${messageObj.sender === 'user' ? 'user' : 'robot'}"></i>
                     </div>
-                    <div class="message-content">${message}</div>
+                    <div class="message-content">${messageObj.message}</div>
                 `;
                 chatbotMessages.appendChild(messageDiv);
                 chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
             }
 
+            function showTypingIndicator() {
+                const typingDiv = document.createElement('div');
+                typingDiv.className = 'typing-indicator';
+                typingDiv.id = 'typingIndicator';
+                typingDiv.innerHTML = `
+                    <div class="message-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="typing-dots">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                `;
+                chatbotMessages.appendChild(typingDiv);
+                chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+            }
+
+            function hideTypingIndicator() {
+                const typingIndicator = document.getElementById('typingIndicator');
+                if (typingIndicator) {
+                    typingIndicator.remove();
+                }
+            }
+
+            // Event listeners
             chatbotSend.addEventListener('click', sendMessage);
             chatbotInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') sendMessage();
+                if (e.key === 'Enter' && !chatbotSend.disabled) {
+                    sendMessage();
+                }
             });
         }
 

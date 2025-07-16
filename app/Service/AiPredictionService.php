@@ -130,7 +130,7 @@ class AiPredictionService
         }
 
         $lotteryToday = [
-            "date" =>  $tomorrow,
+            "date" =>  today()->format('d-m-Y'),
         ];
 
         foreach ($lotteryTodayQuery as $lt) {
@@ -161,10 +161,9 @@ class AiPredictionService
                 ];
             }
         }
-        Log::info($lotteryToday);
 
         if (!$prediction_lo && !$prediction_de) {
-            $responseAddLotteryInAi =  Http::timeout(300)->withHeaders([
+            $responseAddLotteryInAi =  Http::withHeaders([
                 'Accept' => 'application/json',
             ])->post(config('services.base_api_ai') . $api_add, $lotteryToday);
 
@@ -178,7 +177,7 @@ class AiPredictionService
         }
 
         if (!$prediction_lo) {
-            $getPredictionLoToAI = Http::timeout(300)->withHeaders([
+            $getPredictionLoToAI = Http::withHeaders([
                 'Accept' => 'application/json',
             ])->get(config('services.base_api_ai') . $api_get_lo);
 
@@ -189,19 +188,26 @@ class AiPredictionService
                 ]);
             }
 
-            Log::info($getPredictionLoToAI->json());
-            $new_lo_data = array_keys($getPredictionLoToAI->json());
+            $responseData = $getPredictionLoToAI->json();
+            if (!is_array($responseData)) {
+                Log::error('Kết quả trả về từ AI không hợp lệ ' . $getPredictionLoToAI->json());
+            }
+            $new_lo_data = [];
 
-            // AiPrediction::create([
-            //     'prediction_date' => $tomorrow,
-            //     'region' => $region,
-            //     'prediction_type' => 'so_lo',
-            //     'numbers' => $new_lo_data,
-            // ]);
+            foreach (array_keys($responseData) as $nd) {
+                $new_lo_data[] = str_pad($nd, 2, '0', STR_PAD_LEFT);
+            }
+
+            AiPrediction::create([
+                'prediction_date' => $tomorrow,
+                'region' => $region,
+                'prediction_type' => 'so_lo',
+                'numbers' => $new_lo_data,
+            ]);
         }
 
         if (!$prediction_de) {
-            $getPredictionDeToAI = Http::timeout(1200)->withHeaders([
+            $getPredictionDeToAI = Http::withHeaders([
                 'Accept' => 'application/json',
             ])->get(config('services.base_api_ai') . $api_get_de);
 
@@ -212,15 +218,22 @@ class AiPredictionService
                 ]);
             }
 
-            Log::info($getPredictionDeToAI->json());
-            $new_de_data = array_keys($getPredictionDeToAI->json());
+            $responseDataDe = $getPredictionDeToAI->json();
+            if (!is_array($responseData)) {
+                Log::error('Kết quả trả về từ AI không hợp lệ ' . $getPredictionLoToAI->json());
+            }
+            $new_de_data = [];
 
-            // AiPrediction::create([
-            //     'prediction_date' => $tomorrow,
-            //     'region' => $region,
-            //     'prediction_type' => 'so_de',
-            //     'numbers' => $new_de_data,
-            // ]);
+            foreach (array_keys($responseDataDe) as $nd) {
+                $new_de_data[] = str_pad($nd, 2, '0', STR_PAD_LEFT);
+            }
+
+            AiPrediction::create([
+                'prediction_date' => $tomorrow,
+                'region' => $region,
+                'prediction_type' => 'so_de',
+                'numbers' => $new_de_data,
+            ]);
         }
 
         Log::info('Thêm dữ liệu thành công');
@@ -230,16 +243,14 @@ class AiPredictionService
     public function getAiPredictionForNextDraw($request)
     {
         if ($request->add_number == 'show-lo') {
-            session(['show_lo' => true]);
+            session(['show_lo' => now()->addMinutes(5)]);
         }
         if ($request->add_number == 'show-de') {
-            session(['show_de' => true]);
+            session(['show_de' => now()->addMinutes(5)]);
         }
         if ($request->add_number == 'show-xien') {
-            session(['show_xien' => true]);
+            session(['show_xien' => now()->addMinutes(5)]);
         }
-
-        Log::info('show_de ' .session('show_de'). 'show_lo ' .session('show_lo'). 'show_xien '.session('show_xien'));
 
         $region = $request->filled('region') ? $request->region : 'XSMB';
         $date = $this->handleDate($region);
@@ -251,12 +262,20 @@ class AiPredictionService
 
         $number_lo = [];
         $number_de = [];
+
+        $now = now();
+
         if ($prediction_lo) {
-            $number_lo = $this->generateNumberPrediction(session('show_lo'), $prediction_lo->numbers);
-            $number_lo['xien_2'] = $this->generateXienCombinations($prediction_lo->numbers, 2, session('show_xien', false));
+            $isShowLo = session('show_lo') && session('show_lo') > $now;
+            $isShowXien = session('show_xien') && session('show_xien') > $now;
+
+            $number_lo = $this->generateNumberPrediction($isShowLo, $prediction_lo->numbers);
+            $number_lo['xien_2'] = $this->generateXienCombinations($prediction_lo->numbers, 2, $isShowXien);
         }
         if ($prediction_de) {
-            $number_de = $this->generateNumberPrediction(session('show_de'), $prediction_de->numbers);
+            $isShowDe = session('show_de') && session('show_de') > $now;
+
+            $number_de = $this->generateNumberPrediction($isShowDe, $prediction_de->numbers);
         }
 
         return [

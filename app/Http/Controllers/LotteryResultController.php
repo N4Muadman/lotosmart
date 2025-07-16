@@ -55,8 +55,6 @@ class LotteryResultController extends Controller
             '*.region' => 'required|string'
         ]);
 
-        Log::info($data);
-
         $date = now();
         $newNumberData = [];
         foreach ($data as $station) {
