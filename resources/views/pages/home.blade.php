@@ -630,7 +630,7 @@
                     <div class="bg-white shadow-lg rounded-lg p-6 mb-8">
                         <div class="flex items-center justify-between mb-6">
                             <div class="flex items-center space-x-3">
-                                <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                                <div class="w-12 h-12 bg-primary-gradient rounded-full flex items-center justify-center">
                                     <i class="fas fa-robot text-xl ai-icon"></i>
                                 </div>
                                 <div>

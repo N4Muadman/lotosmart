@@ -18,8 +18,8 @@
                 <span>LotoSmart</span>
             </div>
             <nav class="nav-menu">
-                <li><a href="{{ route('home') }}">Trang chủ</a></li>
-                <li><a href="{{route('')}}">Phân tích</a></li>
+                <li><a href="{{ route('pages.home') }}">Trang chủ</a></li>
+                <li><a href="{{route('pages.analytic')}}">Phân tích</a></li>
                 <li><a href="#predictions" class="chatbot-toggle-btn">Dự đoán AI</a></li>
                 <li><a href="#community">Cộng đồng</a></li>
                 <li><a href="#tools">Công cụ</a></li>

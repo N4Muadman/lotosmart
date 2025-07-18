@@ -242,7 +242,7 @@ class AiPredictionService
         return;
     }
 
-    public function AiChatBot($request)
+    public function AiChatBot($conversation, $responseType = 'quick')
     {
         try {
             $predictionData = $this->getCachedPredictionData();
@@ -251,13 +251,9 @@ class AiPredictionService
 
             $aiContext = $this->buildAiContext($predictionData, $statisticsData);
 
-            $conversation = $request->input('conversation');
-
             if (!is_array($conversation)) {
                 throw new \Exception('Dữ liệu nhắn tin không hợp lệ');
             }
-
-            $responseType = $request->input('type', 'quick');
 
             $aiResponse = $this->callAiApi($aiContext, $conversation, $responseType);
 
@@ -355,7 +351,7 @@ class AiPredictionService
         return json_encode($context, JSON_UNESCAPED_UNICODE);
     }
 
-    private function callAiApi($context, $conversation, $responseType = 'quick')
+    private function callAiApi($context, $conversation, $responseType)
     {
         $systemPrompt = "Bạn là chuyên gia phân tích xổ số với 15 năm kinh nghiệm, sử dụng AI và thuật toán machine learning để dự đoán. Bạn có tỷ lệ thành công cao và được nhiều người tin tưởng. Hãy tạo niềm tin và sự hứng thú cho người dùng.
                     QUAN TRỌNG: Hãy nhớ và sử dụng thông tin người dùng đã chia sẻ trong cuộc trò chuyện (tên, sở thích, v.v.) để tạo sự gần gũi.";
@@ -502,7 +498,7 @@ class AiPredictionService
                     - Tạo cảm giác khan hiếm với thời gian (ví dụ: 'Cơ hội vàng hôm nay')
                     - Sử dụng emoji thu hút: 🎯🔥💎⚡🌟💰✨🚀
                     - Kết thúc bằng lời động viên và call-to-action
-                    - Độ dài: 4-6 câu để tạo sự thuyết phục
+                    - Độ dài: 3-4 câu để tạo sự thuyết phục
                     - Nếu thiếu dữ liệu, hãy khuyến khích người dùng cung cấp thêm thông tin";
 
             case 'detailed':
@@ -523,7 +519,7 @@ class AiPredictionService
                 - Cảnh báo rủi ro và lời khuyên chơi có trách nhiệm
                 - Sử dụng emoji chuyên nghiệp: 📊📈🎯💎⚡🔍💰🌟📋🚀
                 - Kết thúc bằng tổng kết và lời chúc may mắn có trách nhiệm
-                - Độ dài: 6-10 đoạn để tạo sự chuyên nghiệp và tin cậy";
+                - Độ dài: ít nhất là 10-15 đoạn để tạo sự chuyên nghiệp và tin cậy càng chi tiết càng tốt";
 
             default:
                 return "Hãy trả lời một cách thân thiện và hữu ích.";
