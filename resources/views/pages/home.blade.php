@@ -19,7 +19,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 pb-3">
                     <div class="ticker-header flex items-center gap-2">
                         <div class="live-indicator w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                        <h3 class="text-lg font-semibold"><i class="fas fa-broadcast-tower"></i> Kết quả trực tiếp</h3>
+                        <h2 class="text-lg font-semibold"><i class="fas fa-broadcast-tower"></i> Kết quả trực tiếp</h2>
                         <span id="loading-indicator" class="loading hidden w-5 h-5 border-2 border-t-blue-500 rounded-full animate-spin"></span>
                     </div>
                     <div class="flex justify-end gap-4">

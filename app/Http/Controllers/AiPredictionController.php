@@ -41,7 +41,7 @@ class AiPredictionController extends Controller
 
             $conversation = [
                 [
-                    "message" => 'Đã phần tích những số này thật kĩ: ' . implode(' - ', $request->numbers),
+                    "message" => 'Hãy phần tích những số này thật kĩ: ' . implode(' - ', $request->numbers),
                     "sender" => 'user'
                 ]
             ];
