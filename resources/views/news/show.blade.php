@@ -8,7 +8,7 @@
     <div class="lg:col-span-9">
       {{-- Breadcrumb --}}
       <nav class="text-gray-500 text-sm mb-4">
-        <a href="{{ route('home') }}" class="hover:underline">Trang chủ</a>
+        <a href="{{ route('pages.home') }}" class="hover:underline">Trang chủ</a>
         <span class="mx-1">›</span>
         <a href="{{ route('news.index') }}" class="hover:underline">Tin tức</a>
         <span class="mx-1">›</span>
