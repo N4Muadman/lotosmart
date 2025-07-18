@@ -5,8 +5,7 @@
         <div class="container mx-auto px-4 py-6">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
-                    <div
-                        class="w-12 h-12 bg-primary-gradient rounded-xl flex items-center justify-center">
+                    <div class="w-12 h-12 bg-primary-gradient rounded-xl flex items-center justify-center">
                         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
@@ -102,27 +101,27 @@
 
         <div id="analysis-section" class="hidden">
             <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
-                <div class="flex items-center justify-between mb-6">
-                    <div class="flex items-center space-x-4">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6 space-y-4 lg:space-y-0">
+                    <div class="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
                         <button id="back-btn"
-                            class="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                            class="flex items-center justify-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors w-full sm:w-auto">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                             </svg>
                             <span>Quay lại</span>
                         </button>
-                        <div>
-                            <h2 class="text-2xl font-bold text-gray-800">Kết quả phân tích</h2>
-                            <p class="text-gray-600">
+                        <div class="text-center sm:text-left">
+                            <h2 class="text-xl sm:text-2xl font-bold text-gray-800">Kết quả phân tích</h2>
+                            <p class="text-gray-600 text-sm sm:text-base">
                                 <span id="analysis-type">Số đã chọn:</span>
-                                <span id="selected-number" class="font-semibold text-blue-600"></span>
+                                <span id="selected-number" class="font-semibold text-blue-600">888</span>
                             </p>
                         </div>
                     </div>
-                    <div class="text-right">
+                    <div class="text-center sm:text-right">
                         <p class="text-sm text-gray-600">Thời gian phân tích</p>
-                        <p class="font-semibold text-gray-800" id="analysis-time"></p>
+                        <p class="font-semibold text-gray-800" id="analysis-time">18/07/2025 - 14:30</p>
                     </div>
                 </div>
 
@@ -203,7 +202,8 @@
         for (let i = 0; i <= 99; i++) {
             const number = i.toString().padStart(2, '0');
             const button = document.createElement('button');
-            button.className = 'number-btn bg-primary-gradient hover:from-blue-600 hover:to-purple-700 text-white font-bold py-1 px-1 rounded-lg shadow-md';
+            button.className =
+                'number-btn bg-primary-gradient hover:from-blue-600 hover:to-purple-700 text-white font-bold py-1 px-1 rounded-lg shadow-md';
             button.textContent = number;
             button.dataset.number = number;
             button.addEventListener('click', () => handleNumberClick(number, button));
@@ -232,12 +232,16 @@
             clearAll();
 
             if (mode === 'single') {
-                document.getElementById('single-mode-btn').className = 'px-4 py-2 rounded-md text-sm font-medium transition-colors bg-blue-500 text-white';
-                document.getElementById('multi-mode-btn').className = 'px-4 py-2 rounded-md text-sm font-medium transition-colors text-gray-600 hover:text-gray-800';
+                document.getElementById('single-mode-btn').className =
+                    'px-4 py-2 rounded-md text-sm font-medium transition-colors bg-blue-500 text-white';
+                document.getElementById('multi-mode-btn').className =
+                    'px-4 py-2 rounded-md text-sm font-medium transition-colors text-gray-600 hover:text-gray-800';
                 document.getElementById('multi-controls').classList.add('hidden');
             } else {
-                document.getElementById('multi-mode-btn').className = 'px-4 py-2 rounded-md text-sm font-medium transition-colors bg-blue-500 text-white';
-                document.getElementById('single-mode-btn').className = 'px-4 py-2 rounded-md text-sm font-medium transition-colors text-gray-600 hover:text-gray-800';
+                document.getElementById('multi-mode-btn').className =
+                    'px-4 py-2 rounded-md text-sm font-medium transition-colors bg-blue-500 text-white';
+                document.getElementById('single-mode-btn').className =
+                    'px-4 py-2 rounded-md text-sm font-medium transition-colors text-gray-600 hover:text-gray-800';
                 document.getElementById('multi-controls').classList.remove('hidden');
             }
         }
@@ -313,7 +317,7 @@
             document.getElementById('analysis-content').classList.add('hidden');
 
             try {
-                const response = await fetch(`{{route('ai-analytic')}}`, {
+                const response = await fetch(`{{ route('ai-analytic') }}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -359,7 +363,7 @@
         }
 
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
+            anchor.addEventListener('click', function(e) {
                 e.preventDefault();
                 document.querySelector(this.getAttribute('href')).scrollIntoView({
                     behavior: 'smooth'
