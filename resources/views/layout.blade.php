@@ -21,8 +21,8 @@
                 <li><a href="{{ route('pages.home') }}">Trang chủ</a></li>
                 <li><a href="{{route('pages.analytic')}}">Phân tích</a></li>
                 <li><a href="#predictions" class="chatbot-toggle-btn">Dự đoán AI</a></li>
-                <li><a href="#community">Cộng đồng</a></li>
-                <li><a href="#tools">Công cụ</a></li>
+                <li><a href="{{ route('news.index') }}">Tin tức</a></li>
+                <li><a href="{{ route('partner.index') }}">Đối tác</a></li>
             </nav>
             <div class="auth-buttons">
                 <a href="#login" class="btn btn-secondary">Đăng nhập</a>
