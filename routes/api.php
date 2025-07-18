@@ -95,3 +95,4 @@ Route::get('ai-prediction-for-next-draw', [AiPredictionController::class, 'getAi
 Route::post('new-lottery-results', [LotteryResultController::class, 'insertLotteryResult']);
 
 Route::post('ai-prediction-chat-bot', [AiPredictionController::class, 'AiChatBot'])->name('ai-chat-bot');
+Route::post('ai-analytic', [AiPredictionController::class, 'AiAnalytic'])->name('ai-analytic');

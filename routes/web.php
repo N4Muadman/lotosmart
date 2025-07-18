@@ -5,9 +5,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('pages.home');
-})->name('home');
+})->name('pages.home');
 
-
-Route::get('/test', function () {
-    return view('welcome');
-});
+Route::get('phan-tich', function() {
+    return view('pages.analytic');
+})->name('pages.analytic');
