@@ -666,6 +666,7 @@ body {
 }
 
 .user-message .message-content {
+    color: var(--bg-disabled);
     background: var(--primary-gradient);
 }
 

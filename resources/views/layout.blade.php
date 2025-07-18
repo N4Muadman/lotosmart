@@ -19,8 +19,8 @@
             </div>
             <nav class="nav-menu">
                 <li><a href="{{ route('home') }}">Trang chủ</a></li>
-                <li><a href="#analysis">Phân tích</a></li>
-                <li><a href="#predictions">Dự đoán AI</a></li>
+                <li><a href="{{route('')}}">Phân tích</a></li>
+                <li><a href="#predictions" class="chatbot-toggle-btn">Dự đoán AI</a></li>
                 <li><a href="#community">Cộng đồng</a></li>
                 <li><a href="#tools">Công cụ</a></li>
             </nav>
@@ -96,7 +96,7 @@
     </div>
 
     <!-- Chatbot Toggle Button -->
-    <button class="chatbot-toggle" id="chatbotToggle">
+    <button class="chatbot-toggle chatbot-toggle-btn" id="chatbotToggle">
         <i class="fas fa-comment"></i>
     </button>
 
@@ -111,17 +111,25 @@
         })
 
         let chatHistory = [];
+        let dataConversation = [];
 
         // Load chat history from storage
         function loadChatHistory() {
             try {
                 const stored = sessionStorage.getItem('chatHistory');
+                const conversation = sessionStorage.getItem('dataConversation');
                 if (stored) {
                     chatHistory = JSON.parse(stored);
                 }
+
+                if (conversation) {
+                    dataConversation = JSON.parse(conversation);
+                }
+
             } catch (e) {
                 // If storage fails, use in-memory storage
                 chatHistory = [];
+                conversation = [];
             }
         }
 
@@ -129,6 +137,7 @@
         function saveChatHistory() {
             try {
                 sessionStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+                sessionStorage.setItem('dataConversation', JSON.stringify(dataConversation));
             } catch (e) {
                 // If storage fails, just keep in memory
                 console.log('Storage not available, using in-memory storage');
@@ -144,7 +153,7 @@
         ];
 
         function initializeChatbot() {
-            const chatbotToggle = document.getElementById('chatbotToggle');
+            const chatbotToggles = document.querySelectorAll('.chatbot-toggle-btn');
             const chatbotContainer = document.getElementById('chatbot');
             const chatbotClose = document.getElementById('chatbotClose');
             const chatbotSend = document.getElementById('chatbotSend');
@@ -154,13 +163,16 @@
             loadChatHistory();
             displayChatHistory();
 
-            chatbotToggle.addEventListener('click', () => {
-                chatbotContainer.style.display = chatbotContainer.style.display === 'flex' ? 'none' : 'flex';
-                if (chatbotContainer.style.display === 'flex') {
-                    chatbotInput.focus();
+            chatbotToggles.forEach(element => {
+                element.addEventListener('click', () => {
+                    chatbotContainer.style.display = chatbotContainer.style.display === 'flex' ? 'none' :
+                        'flex';
+                    if (chatbotContainer.style.display === 'flex') {
+                        chatbotInput.focus();
 
-                    chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
-                }
+                        chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+                    }
+                });
             });
 
             chatbotClose.addEventListener('click', () => {
@@ -227,6 +239,7 @@
                     };
 
                     chatHistory.push(userMessage);
+                    dataConversation.push(userMessage);
                     addMessageToDOM(userMessage);
                     saveChatHistory();
 
@@ -235,7 +248,7 @@
 
                     showTypingIndicator();
 
-                    fetch('{{route('ai-chat-bot')}}', {
+                    fetch('{{ route('ai-chat-bot') }}', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -248,14 +261,22 @@
                         })
                         .then(response => response.json())
                         .then(data => {
-                            const botMessage = {
+                            const botMessageDOM = {
                                 message: marked.parse(data.message),
                                 sender: 'bot',
                                 timestamp: new Date().toISOString()
                             };
 
-                            chatHistory.push(botMessage);
-                            addMessageToDOM(botMessage);
+                            const botMessage = {
+                                message: data.message,
+                                sender: 'bot',
+                                timestamp: new Date().toISOString()
+                            };
+
+                            chatHistory.push(botMessageDOM);
+                            dataConversation.push(botMessage);
+
+                            addMessageToDOM(botMessageDOM);
                             saveChatHistory();
                         })
                         .catch(error => {
