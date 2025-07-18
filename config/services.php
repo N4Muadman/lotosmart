@@ -35,6 +35,10 @@ return [
         ],
     ],
 
-    'base_api_ai' => env('BASE_API_AI')
+    'base_api_ai' => env('BASE_API_AI'),
+
+    'gemini' => [
+        'api_key' => env('GEMINI_API_KEY', 'your-api-key-here'),
+    ],
 
 ];

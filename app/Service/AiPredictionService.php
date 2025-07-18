@@ -6,8 +6,10 @@ use App\Models\AiPrediction;
 use App\Models\LotoNumber;
 use App\Models\LotteryResult;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use PDO;
 
 class AiPredictionService
 {
@@ -238,6 +240,301 @@ class AiPredictionService
 
         Log::info('Thêm dữ liệu thành công');
         return;
+    }
+
+    public function AiChatBot($request)
+    {
+        try {
+            $predictionData = $this->getCachedPredictionData();
+
+            $statisticsData = $this->getCachedStatisticsData();
+
+            $aiContext = $this->buildAiContext($predictionData, $statisticsData);
+
+            $conversation = $request->input('conversation');
+
+            if (!is_array($conversation)) {
+                throw new \Exception('Dữ liệu nhắn tin không hợp lệ');
+            }
+
+            $responseType = $request->input('type', 'quick');
+
+            $aiResponse = $this->callAiApi($aiContext, $conversation, $responseType);
+
+            return [
+                'success' => true,
+                'message' => $aiResponse,
+                'data' => [
+                    'prediction_date' => $this->getPredictionDate()->format('d/m/Y'),
+                ]
+            ];
+        } catch (\Exception $e) {
+            throw new \Exception('Xin lỗi, hệ thống đang gặp sự cố. Vui lòng thử lại sau.');
+        }
+    }
+
+    private function getPredictionDate()
+    {
+        return now()->lt(today()->setTime(18, 30)) ? today() : now()->addDay();
+    }
+
+    private function getCachedPredictionData()
+    {
+        $date = $this->getPredictionDate();
+        $cacheKey = "ai_prediction_data_{$date->format('Y-m-d')}";
+
+        return Cache::remember($cacheKey, now()->addHours(6), function () use ($date) {
+            return AiPrediction::where('prediction_date', $date)
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'date' => $item->prediction_date->format('d/m/Y'),
+                        'type' => $item->prediction_type == 'so_de' ? 'Dự đoán số đề' : 'Dự đoán lô tô',
+                        'region' => $this->formatRegion($item->region),
+                        'numbers' => $item->numbers,
+                        // 'confidence' => $item->confidence ?? 'Cao'
+                    ];
+                });
+        });
+    }
+
+    private function getCachedStatisticsData()
+    {
+        $date = $this->getPredictionDate();
+        $cacheKey = "ai_statistics_data_{$date->format('Y-m-d')}";
+
+        return Cache::remember($cacheKey, now()->addHours(12), function () use ($date) {
+            $regions = ['XSMB', 'XSMN', 'XSMT'];
+            $data100so = range(0, 99);
+            $data100so = array_map(fn($i) => str_pad($i, 2, '0', STR_PAD_LEFT), $data100so);
+
+            $loto_service = new LotoNumberService();
+            $statisticsData = [];
+
+            foreach ($regions as $region) {
+                $stats = $loto_service->baseStatis($data100so, $date, 30, $region);
+
+                if (!is_array($stats) || count($stats) < 1) {
+                    continue;
+                }
+
+                $statisticsData[] = [
+                    'region' => $this->formatRegion($region),
+                    'special_prize_stats' => $stats['special_prize_stats'],
+                    'all_numbers_stats' => $stats['all_number_stats'],
+                    'missing_numbers' => $stats['lastAppearanceRecords'],
+                    'analysis_period' => '30 ngày qua'
+                ];
+            }
+
+            return $statisticsData;
+        });
+    }
+
+    private function formatRegion($region)
+    {
+        return match ($region) {
+            'XSMB' => 'Miền Bắc',
+            'XSMN' => 'Miền Trung',
+            'XSMT' => 'Miền Nam',
+            default => 'Miền Bắc'
+        };
+    }
+
+    private function buildAiContext($predictionData, $statisticsData)
+    {
+        $date = $this->getPredictionDate();
+
+        $context = [
+            'prediction_data' => $predictionData,
+            'statistics_data' => $statisticsData,
+            'analysis_date' => $date->format('d/m/Y'),
+            'data_period' => '30 ngày gần nhất'
+        ];
+
+        return json_encode($context, JSON_UNESCAPED_UNICODE);
+    }
+
+    private function callAiApi($context, $conversation, $responseType = 'quick')
+    {
+        $systemPrompt = "Bạn là chuyên gia phân tích xổ số với 15 năm kinh nghiệm, sử dụng AI và thuật toán machine learning để dự đoán. Bạn có tỷ lệ thành công cao và được nhiều người tin tưởng. Hãy tạo niềm tin và sự hứng thú cho người dùng.
+                    QUAN TRỌNG: Hãy nhớ và sử dụng thông tin người dùng đã chia sẻ trong cuộc trò chuyện (tên, sở thích, v.v.) để tạo sự gần gũi.";
+
+        $dataAnalysisPrompt = "Phân tích dữ liệu xổ số 3 miền dựa trên:
+                            - Thuật toán AI phân tích 30 ngày gần nhất
+                            - Mẫu hình xuất hiện và xu hướng thống kê
+                            - Tần suất xuất hiện của các cặp số
+                            - Độ tin cậy và xác suất thành công
+                            Hãy đưa ra những insight có giá trị thực tế.
+                            LƯU Ý: Đa dạng hóa cách diễn đạt, không lặp lại cùng một cụm từ nhiều lần.";
+
+        $persuasionPrompt = "Hãy tạo sự tin tưởng bằng cách:
+                        - Không cần giới thiệu, chào nhiều nhé, hãy trò chuyện như một người bạn thôi
+                        - Đề cập đến độ chính xác của hệ thống AI (nhưng thay đổi cách diễn đạt)
+                        - Nêu rõ lý do tại sao chọn những số này
+                        - Tạo cảm giác cơ hội quý giá (limited time)
+                        - Sử dụng ngôn ngữ chuyên nghiệp nhưng dễ hiểu
+                        - Không hứa hẹn 100% mà nói về xác suất và xu hướng";
+
+        $responseStylePrompt = $this->getResponseStylePrompt($responseType);
+
+        $conversationContext = $this->buildConversationContext($conversation);
+
+        $dataConversation = $this->processConversation($conversation);
+
+        $fullConversation = [
+            [
+                "parts" => [["text" => $systemPrompt . "\n\nDữ liệu phân tích: " . $context]],
+                "role" => "user"
+            ],
+            [
+                "parts" => [["text" => "Tôi hiểu! Tôi sẽ là chuyên gia phân tích xổ số thân thiện và đáng tin cậy."]],
+                "role" => "model"
+            ],
+            [
+                "parts" => [["text" => $dataAnalysisPrompt . "\n\n" . $persuasionPrompt . "\n\n" . $responseStylePrompt . "\n\nContext cuộc trò chuyện hiện tại: " . $conversationContext]],
+                "role" => "user"
+            ],
+            [
+                "parts" => [["text" => "Đã hiểu tất cả yêu cầu, tôi sẽ trả lời phù hợp với ngữ cảnh cuộc trò chuyện."]],
+                "role" => "model"
+            ]
+        ];
+
+        $fullConversation = array_merge($fullConversation, $dataConversation->toArray());
+
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+            'X-goog-api-key' => config('services.gemini.api_key')
+        ])->timeout(30)->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', [
+            "contents" => $fullConversation,
+            "generationConfig" => [
+                "temperature" => $responseType === 'detailed' ? 0.7 : 0.8,
+                "topK" => 40,
+                "topP" => 0.95,
+                "maxOutputTokens" => $responseType === 'detailed' ? 2048 : 1024,
+            ]
+        ]);
+
+        if ($response->failed()) {
+            Log::error('AI API Error', [
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+
+            return "🤖 Xin lỗi, hệ thống AI đang bận. Vui lòng thử lại sau vài phút!";
+        }
+
+        $responseData = $response->json();
+
+        if (isset($responseData['candidates'][0]['content']['parts'][0]['text'])) {
+            return trim($responseData['candidates'][0]['content']['parts'][0]['text']);
+        }
+
+        return "🎯 Dữ liệu đang được xử lý, vui lòng đợi một chút!";
+    }
+
+    private function buildConversationContext($conversation)
+    {
+        if (empty($conversation)) {
+            return "Cuộc trò chuyện mới bắt đầu";
+        }
+
+        $context = [];
+        $userName = null;
+        $userInterests = [];
+        $lastMessages = array_slice($conversation, -3);
+
+        foreach ($conversation as $item) {
+            if ($item['sender'] === 'user') {
+                if (preg_match('/tên.*?(?:là|)\s*(\w+)/i', $item['message'], $matches)) {
+                    $userName = $matches[1];
+                }
+
+                if (preg_match('/miền\s*(bắc|trung|nam)/i', $item['message'], $matches)) {
+                    $userInterests[] = "miền " . $matches[1];
+                }
+            }
+        }
+
+        if ($userName) {
+            $context[] = "Tên người dùng: " . $userName;
+        }
+
+        if (!empty($userInterests)) {
+            $context[] = "Quan tâm: " . implode(', ', $userInterests);
+        }
+
+        $recentContext = [];
+        foreach ($lastMessages as $msg) {
+            if ($msg['sender'] === 'user') {
+                $recentContext[] = "User: " . $msg['message'];
+            }
+        }
+
+        if (!empty($recentContext)) {
+            $context[] = "Tin nhắn gần đây: " . implode(' | ', $recentContext);
+        }
+
+        return !empty($context) ? implode(' - ', $context) : "Cuộc trò chuyện thông thường";
+    }
+
+    private function processConversation($conversation)
+    {
+        return collect($conversation)->map(function ($item) {
+            return [
+                "parts" => [["text" => $item['message']]],
+                "role" => $item['sender'] === 'bot' ? 'model' : 'user'
+            ];
+        });
+    }
+
+    private function getResponseStylePrompt($type)
+    {
+        switch ($type) {
+            case 'quick':
+                return "Hãy trả lời theo phong cách CHUYÊN GIA HẤP DẪN:
+                    - Bắt đầu bằng lời chào thân thiện và tạo niềm tin
+                    - Đề cập đến độ chính xác dự đoán (THAY ĐỔI cách diễn đạt, không lặp lại 'thuật toán AI phân tích 30 ngày')
+                    - Nêu rõ xu hướng và lý do chọn các số (ví dụ: 'Số 34 đang HOT với tần suất cao', 'Cặp số 17-62 có mẫu hình mạnh')
+                    - Chia theo miền với highlight số CHỐT nhất của mỗi miền
+                    - Thêm tips nhỏ về cách chơi thông minh
+                    - Tạo cảm giác khan hiếm với thời gian (ví dụ: 'Cơ hội vàng hôm nay')
+                    - Sử dụng emoji thu hút: 🎯🔥💎⚡🌟💰✨🚀
+                    - Kết thúc bằng lời động viên và call-to-action
+                    - Độ dài: 4-6 câu để tạo sự thuyết phục
+                    - Nếu thiếu dữ liệu, hãy khuyến khích người dùng cung cấp thêm thông tin";
+
+            case 'detailed':
+                return "Hãy trả lời theo phong cách CHUYÊN GIA PHÂN TÍCH CHUYÊN SÂU:
+                - Bắt đầu bằng tổng quan tình hình thị trường xổ số hôm nay
+                - Phân tích từng miền chi tiết với:
+                + Top 3 số HOT nhất và lý do cụ thể
+                + Số CHỐT đặc biệt với độ tin cậy cao
+                + Các cặp số có mẫu hình mạnh
+                + Xu hướng tăng/giảm dựa trên dữ liệu
+                + So sánh với các ngày trước đó
+                - Tạo bảng phân tích rõ ràng với các cột:
+                + Số dự đoán | Tần suất | Xu hướng | Độ tin cậy
+                - Đưa ra chiến lược chơi thông minh:
+                + Số an toàn (tỷ lệ thành công cao)
+                + Số mạo hiểm (tỷ lệ thưởng cao)
+                + Cách phân bổ vốn hợp lý
+                - Cảnh báo rủi ro và lời khuyên chơi có trách nhiệm
+                - Sử dụng emoji chuyên nghiệp: 📊📈🎯💎⚡🔍💰🌟📋🚀
+                - Kết thúc bằng tổng kết và lời chúc may mắn có trách nhiệm
+                - Độ dài: 6-10 đoạn để tạo sự chuyên nghiệp và tin cậy";
+
+            default:
+                return "Hãy trả lời một cách thân thiện và hữu ích.";
+        }
+    }
+
+    public function clearPredictionCache()
+    {
+        $date = $this->getPredictionDate();
+        Cache::forget("ai_prediction_data_{$date->format('Y-m-d')}");
+        Cache::forget("ai_statistics_data_{$date->format('Y-m-d')}");
     }
 
     public function getAiPredictionForNextDraw($request)

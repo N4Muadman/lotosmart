@@ -18,7 +18,7 @@
                 <span>LotoSmart</span>
             </div>
             <nav class="nav-menu">
-                <li><a href="{{route('home')}}">Trang chủ</a></li>
+                <li><a href="{{ route('home') }}">Trang chủ</a></li>
                 <li><a href="#analysis">Phân tích</a></li>
                 <li><a href="#predictions">Dự đoán AI</a></li>
                 <li><a href="#community">Cộng đồng</a></li>
@@ -103,6 +103,7 @@
     <!-- Notification Toast -->
     <div class="toast-container" id="toastContainer"></div>
 
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             initializeChatbot();
@@ -114,7 +115,7 @@
         // Load chat history from storage
         function loadChatHistory() {
             try {
-                const stored = localStorage.getItem('chatHistory');
+                const stored = sessionStorage.getItem('chatHistory');
                 if (stored) {
                     chatHistory = JSON.parse(stored);
                 }
@@ -127,7 +128,7 @@
         // Save chat history to storage
         function saveChatHistory() {
             try {
-                localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+                sessionStorage.setItem('chatHistory', JSON.stringify(chatHistory));
             } catch (e) {
                 // If storage fails, just keep in memory
                 console.log('Storage not available, using in-memory storage');
@@ -150,7 +151,6 @@
             const chatbotInput = document.getElementById('chatbotInput');
             const chatbotMessages = document.getElementById('chatbotMessages');
 
-            // Load chat history on init
             loadChatHistory();
             displayChatHistory();
 
@@ -190,7 +190,8 @@
             function showSuggestions() {
                 const suggestionsContainer = document.createElement('div');
                 suggestionsContainer.className = 'suggestions';
-                suggestionsContainer.innerHTML = '<div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Gợi ý câu hỏi:</div>';
+                suggestionsContainer.innerHTML =
+                    '<div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Gợi ý câu hỏi:</div>';
 
                 suggestions.forEach(suggestion => {
                     const suggestionItem = document.createElement('div');
@@ -217,10 +218,8 @@
             function sendMessage() {
                 const message = chatbotInput.value.trim();
                 if (message && !chatbotSend.disabled) {
-                    // Remove suggestions when user starts chatting
                     removeSuggestions();
 
-                    // Add user message
                     const userMessage = {
                         message: message,
                         sender: 'user',
@@ -234,36 +233,38 @@
                     chatbotInput.value = '';
                     chatbotSend.disabled = true;
 
-                    // Show typing indicator
                     showTypingIndicator();
 
-                    // Simulate AI response
-                    setTimeout(() => {
-                        hideTypingIndicator();
+                    fetch('{{route('ai-chat-bot')}}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                // 'Authorization': 'Bearer your-token-here'
+                            },
+                            body: JSON.stringify({
+                                conversation: chatHistory
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            const botMessage = {
+                                message: marked.parse(data.message),
+                                sender: 'bot',
+                                timestamp: new Date().toISOString()
+                            };
 
-                        const responses = [
-                            'Dựa trên phân tích dữ liệu lịch sử, số 47 có khả năng cao xuất hiện trong 3 ngày tới với tỷ lệ 73%.',
-                            'Tôi đề xuất bạn nên theo dõi cầu lô của số 23, đã gan 12 ngày. Thống kê cho thấy đây là thời điểm thuận lợi.',
-                            'Xu hướng hiện tại cho thấy dàn đề 12-34-56 có tỷ lệ thành công 78% dựa trên pattern 30 ngày gần đây.',
-                            'Phân tích AI cho thấy XSMB đang trong chu kỳ số chẵn, hãy cân nhắc kỹ trước khi đầu tư.',
-                            'Theo dữ liệu thống kê, số 89 có chu kỳ xuất hiện 15-18 ngày, hiện tại đã 16 ngày chưa về.',
-                            'Tôi khuyên bạn nên đa dạng hóa các con số thay vì tập trung vào một số duy nhất.'
-                        ];
-
-                        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-                        const botMessage = {
-                            message: randomResponse,
-                            sender: 'bot',
-                            timestamp: new Date().toISOString()
-                        };
-
-                        chatHistory.push(botMessage);
-                        addMessageToDOM(botMessage);
-                        saveChatHistory();
-
-                        chatbotSend.disabled = false;
-                        chatbotInput.focus();
-                    }, 1500 + Math.random() * 1000); // Random delay between 1.5-2.5s
+                            chatHistory.push(botMessage);
+                            addMessageToDOM(botMessage);
+                            saveChatHistory();
+                        })
+                        .catch(error => {
+                            console.error('Lỗi:', error);
+                        }).finally(() => {
+                            hideTypingIndicator();
+                            chatbotSend.disabled = false;
+                            chatbotInput.focus();
+                        });
                 }
             }
 
@@ -370,7 +371,6 @@
                     });
             });
         }
-
     </script>
 
 </body>

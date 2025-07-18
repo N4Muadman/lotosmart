@@ -93,3 +93,5 @@ Route::get('base-statis', [StatisticsController::class, 'baseStatis'])->name('ba
 Route::get('ai-prediction-statis', [StatisticsController::class, 'AiPredictionStatus'])->name('AiPredictionStatus');
 Route::get('ai-prediction-for-next-draw', [AiPredictionController::class, 'getAiPredictionForNextDraw'])->name('getAiPredictionForNextDraw')->middleware('web');
 Route::post('new-lottery-results', [LotteryResultController::class, 'insertLotteryResult']);
+
+Route::post('ai-prediction-chat-bot', [AiPredictionController::class, 'AiChatBot'])->name('ai-chat-bot');

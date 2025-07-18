@@ -24,5 +24,16 @@ class AiPredictionController extends Controller
         }
     }
 
+    public function AiChatBot(Request $request){
+        $request->validate(['conversation' => 'required|array']);
+        try{
+            $massage = $this->ai_prediction_service->AiChatBot($request);
+
+            return response()->json($massage, 200);
+        }catch (\Exception $e){
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+    }
+
 
 }
