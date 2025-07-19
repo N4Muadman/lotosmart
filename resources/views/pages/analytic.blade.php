@@ -1,5 +1,5 @@
 @extends('layout')
-
+@section('title', 'Phân Tích Xổ Số - Dự Đoán Số Đẹp')
 @section('content')
     <header class="bg-white shadow-lg">
         <div class="container mx-auto px-4 py-6">
@@ -13,7 +13,7 @@
                         </svg>
                     </div>
                     <div>
-                        <h1 class="text-2xl font-bold text-gray-800">Phân Tích Lô Đề</h1>
+                        <h1 class="text-2xl font-bold text-gray-800">Phân Tích Xổ Số</h1>
                         <p class="text-gray-600 text-sm">Dự đoán và phân tích số đẹp hôm nay</p>
                     </div>
                 </div>
@@ -40,7 +40,7 @@
                                 d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                         </svg>
                     </div>
-                    <h2 class="text-3xl font-bold text-gray-800 mb-4">Chào mừng đến với Hệ thống Phân tích Lô Đề</h2>
+                    <h2 class="text-3xl font-bold text-gray-800 mb-4">Chào mừng đến với Hệ thống Phân tích xổ số</h2>
                     <p class="text-gray-600 text-lg max-w-3xl mx-auto">
                         Hệ thống phân tích thông minh giúp bạn nghiên cứu và dự đoán các con số may mắn.
                         Sử dụng công nghệ AI và dữ liệu lịch sử để đưa ra những phân tích chính xác nhất.

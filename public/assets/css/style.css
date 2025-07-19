@@ -219,7 +219,7 @@ body {
 }
 
 .hero h1 {
-    font-size: var(--font-size-4xl);
+    font-size: var(--font-size-3xl);
     margin-bottom: var(--spacing-md);
     background: var(--primary-gradient);
     -webkit-background-clip: text;
@@ -979,9 +979,9 @@ body {
 
     .nav-menu {
         position: fixed;
-        top: 80px;
+        top: 70px;
         left: -100%;
-        width: 100%;
+        width: 80%;
         height: calc(100vh - 80px);
         background: rgba(0, 51, 51, 0.98);
         backdrop-filter: blur(20px);
@@ -991,12 +991,24 @@ body {
         transition: left 0.3s ease;
     }
 
+    .nav-menu li a {
+        color: var(--bg-disabled);
+    }
+
+    .nav-menu li .btn-secondary{
+        background: var(--primary-gradient);
+    }
+
+    .main-content {
+        margin-top: 70px;
+    }
+
     .nav-menu.active {
         left: 0;
     }
 
     .hero h1 {
-        font-size: var(--font-size-3xl);
+        font-size: var(--font-size-2xl);
     }
 
     .hero p {
