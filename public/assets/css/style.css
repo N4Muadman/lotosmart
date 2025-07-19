@@ -587,7 +587,7 @@ body {
     display: none;
     overflow: hidden;
     flex-direction: column;
-    z-index: 1000;
+    z-index: 1003;
     box-shadow: var(--shadow-dark);
 }
 
@@ -729,7 +729,7 @@ body {
     color: var(--text-primary);
     font-size: var(--font-size-2xl);
     cursor: pointer;
-    z-index: 999;
+    z-index: 1002;
     box-shadow: var(--shadow-primary);
     transition: var(--transition-base);
 }
