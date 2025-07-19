@@ -301,6 +301,7 @@
         }
 
         async function analyzeNumbers(numbersArray) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             document.getElementById('intro-section').classList.add('hidden');
             document.getElementById('analysis-section').classList.remove('hidden');
 
