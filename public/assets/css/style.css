@@ -219,7 +219,7 @@ body {
 }
 
 .hero h1 {
-    font-size: var(--font-size-3xl);
+    font-size: var(--font-size-4xl);
     margin-bottom: var(--spacing-md);
     background: var(--primary-gradient);
     -webkit-background-clip: text;
@@ -672,6 +672,7 @@ body {
 
 .chatbot-input {
     display: flex;
+    justify-content: center;
     padding: var(--spacing-md);
     border-top: 1px solid var(--border-primary);
     gap: var(--spacing-sm);
@@ -684,7 +685,7 @@ body {
     border-radius: 20px;
     padding: 0.75rem var(--spacing-md);
     color: var(--text-primary);
-    font-size: var(--font-size-sm);
+    font-size: 16px;
 }
 
 .chatbot-input input:focus {
@@ -696,8 +697,8 @@ body {
     background: var(--primary-gradient);
     border: none;
     border-radius: var(--border-radius-full);
-    width: 40px;
-    height: 40px;
+    width: 45px;
+    height: 45px;
     color: var(--text-primary);
     cursor: pointer;
     display: flex;
@@ -979,9 +980,9 @@ body {
 
     .nav-menu {
         position: fixed;
-        top: 70px;
+        top: 80px;
         left: -100%;
-        width: 80%;
+        width: 100%;
         height: calc(100vh - 80px);
         background: rgba(0, 51, 51, 0.98);
         backdrop-filter: blur(20px);
@@ -991,24 +992,12 @@ body {
         transition: left 0.3s ease;
     }
 
-    .nav-menu li a {
-        color: var(--bg-disabled);
-    }
-
-    .nav-menu li .btn-secondary{
-        background: var(--primary-gradient);
-    }
-
-    .main-content {
-        margin-top: 70px;
-    }
-
     .nav-menu.active {
         left: 0;
     }
 
     .hero h1 {
-        font-size: var(--font-size-2xl);
+        font-size: var(--font-size-3xl);
     }
 
     .hero p {
