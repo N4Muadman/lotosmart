@@ -4,7 +4,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LotoSmart Analytics - Phân tích thông minh, Quyết định sáng suốt</title>
+    <meta name="robots" content="index, follow">
+    <title>630.vn | @yield('title', 'Dự Đoán Lô Đề Chuẩn AI – Phân Tích Xổ Số Chính Xác Nhất')</title>
+    <meta name="description" content="630.vn: Nền tảng dự đoán lô đề AI hàng đầu, phân tích dữ liệu xổ số và đưa ra 10 số có tỷ lệ về cao nhất. Tối ưu chiến lược vốn với AI tài chính. Tăng cơ hội trúng lớn ngay hôm nay!">
+    <meta name="keywords" content="dự đoán lô đề, dự đoán lô đề AI, lô đề chuẩn AI, xổ số AI, phân tích xổ số, số đẹp hôm nay, soi cầu AI, 630vn, dự đoán xổ số miền Bắc, dự đoán xổ số miền Nam, dự đoán xổ số miền Trung, AI tài chính, tối ưu vốn lô đề, xsmb, xsmn, xsmt,xổ số miền bắc, xổ số miền nam, xổ số miền trung">
+    <link rel="canonical" href="{{url('/')}}">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{url('/')}}">
+    <meta property="og:title" content="630.vn | Dự Đoán Lô Đề Chuẩn AI – Phân Tích Xổ Số Chính Xác Nhất">
+    <meta property="og:description" content="630.vn: Nền tảng dự đoán lô đề AI hàng đầu, phân tích dữ liệu xổ số và đưa ra 10 số có tỷ lệ về cao nhất. Tối ưu chiến lược vốn với AI tài chính. Tăng cơ hội trúng lớn ngay hôm nay!">
+    <meta property="og:image" content="{{url('/')}}/logo-630vn-share.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{url('/')}}">
+    <meta name="twitter:title" content="630.vn | Dự Đoán Lô Đề Chuẩn AI – Phân Tích Xổ Số Chính Xác Nhất">
+    <meta name="twitter:description" content="630.vn: Nền tảng dự đoán lô đề AI hàng đầu, phân tích dữ liệu xổ số và đưa ra 10 số có tỷ lệ về cao nhất. Tối ưu chiến lược vốn với AI tài chính. Tăng cơ hội trúng lớn ngay hôm nay!">
+    <meta name="twitter:image" content="{{url('/')}}/logo-630vn-share.png">
+
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="/assets/css/style.css">
 </head>
@@ -15,18 +36,24 @@
         <div class="nav-container">
             <div class="logo">
                 <i class="fas fa-chart-line"></i>
-                <span>LotoSmart</span>
+                <span>630 AI</span>
             </div>
             <nav class="nav-menu">
-                <li><a href="{{ route('pages.home') }}">Trang chủ</a></li>
-                <li><a href="{{route('pages.analytic')}}">Phân tích</a></li>
-                <li><a href="#predictions" class="chatbot-toggle-btn">Dự đoán AI</a></li>
-                <li><a href="{{ route('news.index') }}">Tin tức</a></li>
-                <li><a href="{{ route('partner.index') }}">Đối tác</a></li>
+                <li><a href="{{ route('pages.home') }}" class="w-full block">Trang chủ</a></li>
+                <li><a href="{{ route('pages.analytic') }}" class="w-full block">Phân tích</a></li>
+                <li><a href="#predictions" class="chatbot-toggle-btn w-full block">Dự đoán AI</a></li>
+                <li><a href="{{ route('news.index') }}" class="w-full block">Tin tức</a></li>
+                <li><a href="{{ route('partner.index') }}" class="w-full block">Đối tác</a></li>
+                <li class="flex gap-3 justify-center block md:hidden">
+                    <a href="#login" class="btn btn-secondary">Đăng nhập</a>
+                    <a href="#register" class="btn btn-primary">Đăng ký</a>
+                </li>
             </nav>
-            <div class="auth-buttons">
-                <a href="#login" class="btn btn-secondary">Đăng nhập</a>
-                <a href="#register" class="btn btn-primary">Đăng ký</a>
+            <div class="hidden md:block">
+                <div class="auth-buttons ">
+                    <a href="#login" class="btn btn-secondary">Đăng nhập</a>
+                    <a href="#register" class="btn btn-primary">Đăng ký</a>
+                </div>
             </div>
             <div class="mobile-menu-toggle" id="mobileMenuToggle">
                 <i class="fas fa-bars"></i>
@@ -40,7 +67,7 @@
 
     <!-- Footer -->
     <footer class="footer">
-        <div class="footer-content">
+        {{-- <div class="footer-content">
             <div class="footer-section">
                 <h3>Sản phẩm</h3>
                 <a href="#">Dashboard Analytics</a>
@@ -69,9 +96,9 @@
                 <a href="#">Trách nhiệm</a>
                 <a href="#">Cookie Policy</a>
             </div>
-        </div>
+        </div> --}}
         <div class="footer-bottom">
-            <p>&copy; 2024 LotoSmart Analytics. Tất cả quyền được bảo lưu. | Phân tích thông minh - Quyết định sáng suốt
+            <p>&copy; 2024 630 AI dự đoán. Tất cả quyền được bảo lưu. | Phân tích thông minh - Quyết định sáng suốt
             </p>
         </div>
     </footer>
@@ -184,7 +211,7 @@
 
                 if (chatHistory.length === 0) {
                     const welcomeMessage = {
-                        message: "Xin chào! Tôi là AI Assistant của LotoSmart. Tôi có thể giúp bạn phân tích dữ liệu và đưa ra dự đoán thông minh. Bạn cần hỗ trợ gì?",
+                        message: "Xin chào! Tôi là AI dự đoán của 630. Tôi có thể giúp bạn phân tích dữ liệu và đưa ra dự đoán thông minh. Bạn cần hỗ trợ gì?",
                         sender: 'bot',
                         timestamp: new Date().toISOString()
                     };

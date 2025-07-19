@@ -1,15 +1,20 @@
 @extends('layout')
 
 @section('content')
-<div id="app">
+    <div id="app">
         <!-- Hero Section -->
         <section class="hero bg-gradient-to-r from-blue-600 to-blue-800 text-white py-20">
             <div class="hero-content container mx-auto text-center fade-in">
-                <h1 class="text-4xl md:text-5xl font-bold mb-4">Phân tích thông minh<br>Quyết định sáng suốt</h1>
-                <p class="text-lg mb-8">Hệ thống phân tích lô đề tiên tiến nhất với AI và Machine Learning, giúp bạn đưa ra quyết định dựa trên dữ liệu chính xác.</p>
+                <h1 class="text-3xl md:text-4xl font-bold mb-4">
+                    Dự đoán Lô Đề Chuẩn AI <br> Nâng Tầm Cơ Hội Cùng 630.vn <br>
+                </h1>
+                <p class="text-lg mb-8">
+                    Nền tảng hàng đầu áp dụng công nghệ AI tiên tiến nhất để phân tích dữ liệu xổ số và đưa ra những dự đoán
+                    lô đề chính xác.
+                </p>
                 <div class="cta-buttons flex justify-center gap-4">
-                    <a href="#dashboard" class="btn btn-primary bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded">Bắt đầu miễn phí</a>
-                    <a href="#demo" class="btn btn-secondary border border-white text-white py-2 px-4 rounded hover:bg-white hover:text-blue-600">Xem demo</a>
+                    <a href="#ai-prediction" class="btn btn-primary bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded">Xem dự đoán</a>
+                    <a href="#statis" class="btn btn-secondary border border-white text-white py-2 px-4 rounded hover:bg-white hover:text-blue-600">Thống kê</a>
                 </div>
             </div>
         </section>
@@ -19,7 +24,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 pb-3">
                     <div class="ticker-header flex items-center gap-2">
                         <div class="live-indicator w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
-                        <h2 class="text-lg font-semibold"><i class="fas fa-broadcast-tower"></i> Kết quả trực tiếp</h2>
+                        <h2 class="text-lg font-semibold"><i class="fas fa-broadcast-tower"></i> Kết quả xổ số trực tiếp</h2>
                         <span id="loading-indicator" class="loading hidden w-5 h-5 border-2 border-t-blue-500 rounded-full animate-spin"></span>
                     </div>
                     <div class="flex justify-end gap-4">
@@ -77,7 +82,7 @@
                 </div>
             </section>
 
-            <section id="dashboard" class="dashboard mt-8">
+            <section id="statis" class="dashboard mt-8">
                 <h2 class="section-title text-2xl font-bold mb-6">Thống kê kết quả</h2>
 
                 <!-- Analysis Tools -->
@@ -566,7 +571,7 @@
                     <div>
                         <div id="lottery-result-statis">
                             <div class="region-result">
-                                <div class="region-title text-lg font-semibold">Tổng hợp loto - ${this.formatDate(this.data.currentDate)}</div>
+                                <div class="region-title text-lg font-semibold"><h3>Tổng hợp loto - ${this.formatDate(this.data.currentDate)}</h3></div>
                                 ${Array.from({ length: 10 }, (_, i) => `
                                     <div class="result-numbers flex gap-2 my-2">
                                         <div>Đầu ${i}: </div>
@@ -604,7 +609,7 @@
                         ${Object.values(this.data.lotteryXSTN).map(it => `
                             <div class="lottery-result-statis" data-province="${it.lottery?.province ?? ''}">
                                 <div class="region-result">
-                                    <div class="region-title text-lg font-semibold">Tổng hợp loto - ${it.lottery?.province ?? 'Chưa xác định'} - ${this.formatDate(this.data.currentDate)}</div>
+                                    <div class="region-title text-lg font-semibold"><h3>Tổng hợp loto - ${it.lottery?.province ?? 'Chưa xác định'} - ${this.formatDate(this.data.currentDate)}</h3></div>
                                     ${Array.from({ length: 10 }, (_, i) => `
                                         <div class="result-numbers flex gap-2 my-2">
                                             <div>Đầu ${i}: </div>
