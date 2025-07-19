@@ -143,7 +143,7 @@ body {
 }
 
 .nav-menu a {
-    color: var(--text-primary);
+    color: var(--bg-disabled);
     text-decoration: none;
     transition: var(--transition-base);
     padding: var(--spacing-sm) var(--spacing-md);
@@ -189,7 +189,7 @@ body {
 
 /* Main Content */
 .main-content {
-    margin-top: 80px;
+    margin-top: 70px;
 }
 
 /* Hero Section */
@@ -219,7 +219,7 @@ body {
 }
 
 .hero h1 {
-    font-size: var(--font-size-4xl);
+    font-size: var(--font-size-3xl);
     margin-bottom: var(--spacing-md);
     background: var(--primary-gradient);
     -webkit-background-clip: text;
@@ -672,7 +672,7 @@ body {
 
 .chatbot-input {
     display: flex;
-    justify-content: center;
+    align-items: center;
     padding: var(--spacing-md);
     border-top: 1px solid var(--border-primary);
     gap: var(--spacing-sm);
@@ -980,10 +980,10 @@ body {
 
     .nav-menu {
         position: fixed;
-        top: 80px;
+        top: 70px;
         left: -100%;
-        width: 100%;
-        height: calc(100vh - 80px);
+        width: 80%;
+        height: calc(100vh - 70px);
         background: rgba(0, 51, 51, 0.98);
         backdrop-filter: blur(20px);
         flex-direction: column;
@@ -992,12 +992,16 @@ body {
         transition: left 0.3s ease;
     }
 
+    .nav-menu li .btn-secondary {
+        background: var(--primary-gradient);
+    }
+
     .nav-menu.active {
         left: 0;
     }
 
     .hero h1 {
-        font-size: var(--font-size-3xl);
+        font-size: var(--font-size-2xl);
     }
 
     .hero p {
