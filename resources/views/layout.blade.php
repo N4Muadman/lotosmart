@@ -35,11 +35,13 @@
     <header class="header">
         <div class="nav-container">
             <div class="logo">
-                <i class="fas fa-chart-line"></i>
-                <span>630 AI</span>
+                <a href="{{ route('pages.home') }}">
+                    <i class="fas fa-chart-line"></i>
+                    <span>630 AI</span>
+                </a>
             </div>
             <nav class="nav-menu">
-                <li><a href="{{ route('pages.home') }}" class="w-full block">Trang chủ</a></li>
+                <li> class="w-full block">Trang chủ</a></li>
                 <li><a href="{{ route('pages.analytic') }}" class="w-full block">Phân tích</a></li>
                 <li><a href="#predictions" class="chatbot-toggle-btn w-full block">Dự đoán AI</a></li>
                 <li><a href="{{ route('news.index') }}" class="w-full block">Tin tức</a></li>
