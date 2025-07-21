@@ -1107,6 +1107,14 @@ body {
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
+    .header{
+        display: flex;
+        justify-content: space-between;
+    }
+    .nav-container{
+        margin: 0 0;
+    }
+
     .mobile-toggle {
         display: block;
     }
