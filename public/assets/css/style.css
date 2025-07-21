@@ -246,14 +246,14 @@ body {
 
 .mobile-menu {
     position: fixed;
-    top: 70px;
+    top: 78px;
     right: -100%;
     width: 300px;
     height: calc(100vh - 70px);
     background: var(--accent-gradient);
     padding: 2rem;
     transition: right 0.3s ease;
-    z-index: 999;
+    z-index: 1005;
     overflow-y: auto;
 }
 
