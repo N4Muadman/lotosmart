@@ -6,23 +6,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="index, follow">
     <title>630.vn | @yield('title', 'Dự Đoán Lô Đề Chuẩn AI – Phân Tích Xổ Số Chính Xác Nhất')</title>
-    <meta name="description" content="630.vn: Nền tảng dự đoán lô đề AI hàng đầu, phân tích dữ liệu xổ số và đưa ra 10 số có tỷ lệ về cao nhất. Tối ưu chiến lược vốn với AI tài chính. Tăng cơ hội trúng lớn ngay hôm nay!">
-    <meta name="keywords" content="dự đoán lô đề, dự đoán lô đề AI, lô đề chuẩn AI, xổ số AI, phân tích xổ số, số đẹp hôm nay, soi cầu AI, 630vn, dự đoán xổ số miền Bắc, dự đoán xổ số miền Nam, dự đoán xổ số miền Trung, AI tài chính, tối ưu vốn lô đề, xsmb, xsmn, xsmt,xổ số miền bắc, xổ số miền nam, xổ số miền trung">
-    <link rel="canonical" href="{{url('/')}}">
+    <meta name="description"
+        content="630.vn: Nền tảng dự đoán lô đề AI hàng đầu, phân tích dữ liệu xổ số và đưa ra 10 số có tỷ lệ về cao nhất. Tối ưu chiến lược vốn với AI tài chính. Tăng cơ hội trúng lớn ngay hôm nay!">
+    <meta name="keywords"
+        content="dự đoán lô đề, dự đoán lô đề AI, lô đề chuẩn AI, xổ số AI, phân tích xổ số, số đẹp hôm nay, soi cầu AI, 630vn, dự đoán xổ số miền Bắc, dự đoán xổ số miền Nam, dự đoán xổ số miền Trung, AI tài chính, tối ưu vốn lô đề, xsmb, xsmn, xsmt,xổ số miền bắc, xổ số miền nam, xổ số miền trung">
+    <link rel="canonical" href="{{ url('/') }}">
 
     <meta property="og:type" content="website">
-    <meta property="og:url" content="{{url('/')}}">
+    <meta property="og:url" content="{{ url('/') }}">
     <meta property="og:title" content="630.vn | Dự Đoán Lô Đề Chuẩn AI – Phân Tích Xổ Số Chính Xác Nhất">
-    <meta property="og:description" content="630.vn: Nền tảng dự đoán lô đề AI hàng đầu, phân tích dữ liệu xổ số và đưa ra 10 số có tỷ lệ về cao nhất. Tối ưu chiến lược vốn với AI tài chính. Tăng cơ hội trúng lớn ngay hôm nay!">
-    <meta property="og:image" content="{{url('/')}}/logo-630vn-share.png">
+    <meta property="og:description"
+        content="630.vn: Nền tảng dự đoán lô đề AI hàng đầu, phân tích dữ liệu xổ số và đưa ra 10 số có tỷ lệ về cao nhất. Tối ưu chiến lược vốn với AI tài chính. Tăng cơ hội trúng lớn ngay hôm nay!">
+    <meta property="og:image" content="{{ url('/') }}/logo-630vn-share.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
 
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="{{url('/')}}">
+    <meta name="twitter:url" content="{{ url('/') }}">
     <meta name="twitter:title" content="630.vn | Dự Đoán Lô Đề Chuẩn AI – Phân Tích Xổ Số Chính Xác Nhất">
-    <meta name="twitter:description" content="630.vn: Nền tảng dự đoán lô đề AI hàng đầu, phân tích dữ liệu xổ số và đưa ra 10 số có tỷ lệ về cao nhất. Tối ưu chiến lược vốn với AI tài chính. Tăng cơ hội trúng lớn ngay hôm nay!">
-    <meta name="twitter:image" content="{{url('/')}}/logo-630vn-share.png">
+    <meta name="twitter:description"
+        content="630.vn: Nền tảng dự đoán lô đề AI hàng đầu, phân tích dữ liệu xổ số và đưa ra 10 số có tỷ lệ về cao nhất. Tối ưu chiến lược vốn với AI tài chính. Tăng cơ hội trúng lớn ngay hôm nay!">
+    <meta name="twitter:image" content="{{ url('/') }}/logo-630vn-share.png">
 
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
@@ -31,7 +35,8 @@
 </head>
 
 <body>
-    <!-- Header -->
+    <div class="overlay" id="overlay"></div>
+
     <header class="header">
         <div class="nav-container">
             <div class="logo">
@@ -40,27 +45,42 @@
                     <span>630 AI</span>
                 </a>
             </div>
+
             <nav class="nav-menu">
-                <li><a href="{{ route('pages.analytic') }}" class="w-full block">Phân tích</a></li>
-                <li><a href="#predictions" class="chatbot-toggle-btn w-full block">Dự đoán AI</a></li>
-                <li><a href="{{ route('news.index') }}" class="w-full block">Tin tức</a></li>
-                <li><a href="{{ route('partner.index') }}" class="w-full block">Đối tác</a></li>
-                <li class="flex gap-3 justify-center block md:hidden">
-                    <a href="#login" class="btn btn-secondary">Đăng nhập</a>
-                    <a href="#register" class="btn btn-primary">Đăng ký</a>
-                </li>
+                <a href="{{ route('pages.analytic') }}">Phân tích</a>
+                <a href="#predictions" class="chatbot-toggle-btn">Dự đoán AI</a>
+                <a href="{{ route('news.index') }}">Tin tức</a>
+                <a href="{{ route('partner.index') }}">Đối tác</a>
             </nav>
-            <div class="hidden md:block">
-                <div class="auth-buttons ">
-                    <a href="#login" class="btn btn-secondary">Đăng nhập</a>
-                    <a href="#register" class="btn btn-primary">Đăng ký</a>
-                </div>
-            </div>
-            <div class="mobile-menu-toggle" id="mobileMenuToggle">
-                <i class="fas fa-bars"></i>
+
+            <div class="auth-buttons">
+                <a href="#login" class="btn btn-secondary">Đăng nhập</a>
+                <a href="#register" class="btn btn-primary">Đăng ký</a>
             </div>
         </div>
+
+        <button class="mobile-toggle" id="mobileToggle">
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </button>
     </header>
+
+    <div class="mobile-menu" id="mobileMenu">
+        <ul>
+            <li><a href="{{ route('pages.analytic') }}">📊 Phân tích</a></li>
+            <li><a href="#predictions" class="chatbot-toggle-btn">🤖 Dự đoán AI</a></li>
+            <li><a href="{{ route('news.index') }}">📰 Tin tức</a></li>
+            <li><a href="{{ route('partner.index') }}">🤝 Đối tác</a></li>
+        </ul>
+
+        <div class="mobile-auth">
+            <a href="#login" class="btn btn-secondary">Đăng nhập</a>
+            <a href="#register" class="btn btn-primary">Đăng ký</a>
+        </div>
+    </div>
 
     <main class="main-content">
         @yield('content')
@@ -366,16 +386,64 @@
 
         // Mobile Menu
         function initializeMobileMenu() {
-            const mobileToggle = document.getElementById('mobileMenuToggle');
-            const navMenu = document.querySelector('.nav-menu');
+            const mobileToggle = document.getElementById('mobileToggle');
+            const mobileMenu = document.getElementById('mobileMenu');
+            const overlay = document.getElementById('overlay');
+            let isOpen = false;
 
-            if (mobileToggle && navMenu) {
-                mobileToggle.addEventListener('click', () => {
-                    navMenu.classList.toggle('active');
-                });
+            function toggleMenu() {
+                isOpen = !isOpen;
+
+                if (isOpen) {
+                    mobileToggle.classList.add('active');
+                    mobileMenu.classList.add('active');
+                    overlay.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    mobileToggle.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                    overlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
             }
-        }
 
+            function closeMenu() {
+                if (isOpen) {
+                    isOpen = false;
+                    mobileToggle.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                    overlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
+            }
+
+            // Toggle on button click
+            mobileToggle.addEventListener('click', toggleMenu);
+
+            // Close on overlay click
+            overlay.addEventListener('click', closeMenu);
+
+            // Close on menu link click
+            mobileMenu.addEventListener('click', (e) => {
+                if (e.target.tagName === 'A') {
+                    closeMenu();
+                }
+            });
+
+            // Close on escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeMenu();
+                }
+            });
+
+            // Close on window resize
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 768) {
+                    closeMenu();
+                }
+            });
+        }
 
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function(e) {
