@@ -107,7 +107,7 @@
     <div class="chatbot-container" id="chatbot">
         <div class="chatbot-header">
             <i class="fas fa-robot"></i>
-            <span>AI Assistant</span>
+            <span>AI 630</span>
             <button class="chatbot-close" id="chatbotClose">
                 <i class="fas fa-times"></i>
             </button>
