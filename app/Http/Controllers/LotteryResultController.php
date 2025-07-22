@@ -57,6 +57,7 @@ class LotteryResultController extends Controller
 
         $date = now();
         $newNumberData = [];
+        $new_lotteries = collect();
         foreach ($data as $station) {
             $new_lottery = $this->lottery_result_service->processNewResult($date, $station['region'], $station['province'], $station['prizes']);
             $newNumberData[] = [
@@ -66,23 +67,47 @@ class LotteryResultController extends Controller
             ];
 
             $this->loto_number_service->processNewResult($new_lottery);
+            $new_lotteries->push($new_lottery);
+        }
 
-            $count = $new_lottery->getAllNumbers()->count();
-            switch (true) {
-                case $new_lottery->region === 'XSMB' && $count === 27:
-                    AiPredictionForNextDrawJob::dispatch('XSMB');
-                    break;
-                case $new_lottery->region === 'XSMN' && $count === 18:
-                    AiPredictionForNextDrawJob::dispatch('XSMN');
-                    break;
-                case $new_lottery->region === 'XSMT' && $count === 18:
-                    AiPredictionForNextDrawJob::dispatch('XSMT');
-                    break;
-            }
+        $checkSuccessInsert = $this->checkSuccessInsert($new_lotteries);
+        if ($checkSuccessInsert) {
+            AiPredictionForNextDrawJob::dispatch($checkSuccessInsert);
         }
 
         broadcast(new LotteryResultSent($newNumberData));
         return response()->json([$newNumberData], 200);
+    }
+
+    private function checkSuccessInsert($new_lotteries)
+    {
+        if ($new_lotteries->isEmpty()) {
+            return false;
+        }
+
+        foreach ($new_lotteries as $new_lottery) {
+            $count = $new_lottery->getAllNumbers()->count();
+
+            switch ($new_lottery->region) {
+                case 'XSMB':
+                    if ($count !== 27) {
+                        return false;
+                    }
+                    break;
+
+                case 'XSMN':
+                case 'XSMT':
+                    if ($count !== 18) {
+                        return false;
+                    }
+                    break;
+
+                default:
+                    return false;
+            }
+        }
+
+        return $new_lotteries->first()->region;
     }
 
     private function handleDate($region, $date)

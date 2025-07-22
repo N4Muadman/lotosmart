@@ -13,8 +13,9 @@
                     lô đề chính xác.
                 </p>
                 <div class="cta-buttons flex justify-center gap-4">
-                    <a href="#ai-prediction" class="btn btn-primary bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded">Xem dự đoán</a>
-                    <a href="#statis" class="btn btn-secondary border border-white text-white py-2 px-4 rounded hover:bg-white hover:text-blue-600">Thống kê</a>
+                    <a href="#ai-prediction" class="btn btn-primary">Xem dự đoán</a>
+                    <a href="#statis" class="btn btn-secondary">Thống kê</a>
+                    <a href="{{route('pages.simulate-draw')}}" class="btn btn-primary">Quay thử xổ số</a>
                 </div>
             </div>
         </section>

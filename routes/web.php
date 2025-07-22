@@ -12,6 +12,10 @@ Route::get('phan-tich', function() {
     return view('pages.analytic');
 })->name('pages.analytic');
 
+Route::get('quay-thu-xo-so', function() {
+    return view('pages.simulate-lottery-draw');
+})->name('pages.simulate-draw');
+
 Route::get('/test', function () {
     return view('welcome');
 });

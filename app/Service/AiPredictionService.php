@@ -118,24 +118,65 @@ class AiPredictionService
 
     public function generateAndStorePredictionForTomorrow($region, $api_add, $api_get_lo, $api_get_de)
     {
-        $tomorrow = now()->addDay(1)->format('Y-m-d');
-        $aiPredictionXsmbTomorrow = AiPrediction::where('region', $region)->where('prediction_date', $tomorrow);
+        $tomorrow = now()->addDay()->format('Y-m-d');
 
-        $prediction_lo = (clone $aiPredictionXsmbTomorrow)->where('prediction_type', 'so_lo')->first();
-        $prediction_de = (clone $aiPredictionXsmbTomorrow)->where('prediction_type', 'so_de')->first();
+        // Tối ưu query bằng cách lấy cả 2 loại prediction trong 1 lần
+        $existingPredictions = AiPrediction::where('region', $region)
+            ->where('prediction_date', $tomorrow)
+            ->whereIn('prediction_type', ['so_lo', 'so_de'])
+            ->pluck('prediction_type')
+            ->toArray();
 
-        $lotteryTodayQuery = LotteryResult::where('region', $region)->where('draw_date', today())->get();
+        $prediction_lo_exists = in_array('so_lo', $existingPredictions);
+        $prediction_de_exists = in_array('so_de', $existingPredictions);
 
-        if ($lotteryTodayQuery->count() === 0) {
-            Log::warning('Không tìm thấy kết quả ' . $region . ' hôm nay');
+        // Early return nếu cả 2 prediction đã tồn tại
+        if ($prediction_lo_exists && $prediction_de_exists) {
+            Log::info("Predictions for {$region} tomorrow already exist");
             return;
         }
 
+        $lotteryTodayQuery = LotteryResult::where('region', $region)
+            ->where('draw_date', today())
+            ->get();
+
+        if ($lotteryTodayQuery->isEmpty()) {
+            Log::warning("Không tìm thấy kết quả {$region} hôm nay");
+            return;
+        }
+
+        $lotteryToday = $this->formatLotteryData($lotteryTodayQuery, $region);
+
+        // Chỉ gọi API add data nếu cần thiết
+        if (!$prediction_lo_exists || !$prediction_de_exists) {
+            if (!$this->addLotteryDataToAI($lotteryToday, $api_add, $region)) {
+                return; // Stop execution if adding data fails
+            }
+        }
+
+        // Xử lý prediction lô
+        if (!$prediction_lo_exists) {
+            $this->processPrediction($region, $tomorrow, $api_get_lo, 'so_lo', 'Lô');
+        }
+
+        // Xử lý prediction đề
+        if (!$prediction_de_exists) {
+            $this->processPrediction($region, $tomorrow, $api_get_de, 'so_de', 'Đề');
+        }
+
+        Log::info("Thêm dữ liệu {$region} thành công");
+    }
+
+    /**
+     * Format lottery data theo region
+     */
+    private function formatLotteryData($lotteryResults, $region)
+    {
         $lotteryToday = [
-            "date" =>  today()->format('d-m-Y'),
+            "date" => today()->format('d-m-Y'),
         ];
 
-        foreach ($lotteryTodayQuery as $lt) {
+        foreach ($lotteryResults as $lt) {
             if ($region === 'XSMB') {
                 $lotteryToday['special_prize'] = $lt->special_prize[0];
                 $lotteryToday['all_results'] = [
@@ -164,82 +205,89 @@ class AiPredictionService
             }
         }
 
-        if (!$prediction_lo && !$prediction_de) {
-            $responseAddLotteryInAi =  Http::withHeaders([
-                'Accept' => 'application/json',
-            ])->post(config('services.base_api_ai') . $api_add, $lotteryToday);
+        return $lotteryToday;
+    }
 
-            if ($responseAddLotteryInAi->failed()) {
-                Log::error('Thêm dữ liệu ' . $region . ' vào AI không thành công', [
-                    'status' => $responseAddLotteryInAi->status(),
-                    'body' => $responseAddLotteryInAi->body(),
+    /**
+     * Thêm dữ liệu lottery vào AI
+     */
+    private function addLotteryDataToAI($lotteryData, $api_add, $region)
+    {
+        try {
+            $response = Http::timeout(30)
+                ->withHeaders(['Accept' => 'application/json'])
+                ->post(config('services.base_api_ai') . $api_add, $lotteryData);
+
+            if ($response->failed()) {
+                Log::error("Thêm dữ liệu {$region} vào AI không thành công", [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                    'url' => config('services.base_api_ai') . $api_add
                 ]);
-                return;
+                return false;
             }
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error("Exception khi thêm dữ liệu {$region} vào AI", [
+                'message' => $e->getMessage(),
+                'url' => config('services.base_api_ai') . $api_add
+            ]);
+            return false;
         }
+    }
 
-        if (!$prediction_lo) {
-            $getPredictionLoToAI = Http::withHeaders([
-                'Accept' => 'application/json',
-            ])->get(config('services.base_api_ai') . $api_get_lo);
+    /**
+     * Xử lý prediction từ AI
+     */
+    private function processPrediction($region, $tomorrow, $api_endpoint, $prediction_type, $type_name)
+    {
+        try {
+            $response = Http::timeout(30)
+                ->withHeaders(['Accept' => 'application/json'])
+                ->get(config('services.base_api_ai') . $api_endpoint);
 
-            if ($getPredictionLoToAI->failed()) {
-                Log::error('Lấy dữ liệu dự đoán ' . $region . ' Lô từ AI không thành công', [
-                    'status' => $getPredictionLoToAI->status(),
-                    'body' => $getPredictionLoToAI->body(),
+            if ($response->failed()) {
+                Log::error("Lấy dữ liệu dự đoán {$region} {$type_name} từ AI không thành công", [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                    'url' => config('services.base_api_ai') . $api_endpoint
                 ]);
+                return false;
             }
 
-            $responseData = $getPredictionLoToAI->json();
-            if (!is_array($responseData)) {
-                Log::error('Kết quả trả về từ AI không hợp lệ ' . $getPredictionLoToAI->json());
-            }
-            $new_lo_data = [];
+            $responseData = $response->json();
 
-            foreach (array_keys($responseData) as $nd) {
-                $new_lo_data[] = str_pad($nd, 2, '0', STR_PAD_LEFT);
+            if (!is_array($responseData) || empty($responseData)) {
+                Log::error("Kết quả trả về từ AI không hợp lệ cho {$region} {$type_name}", [
+                    'response' => $responseData
+                ]);
+                return false;
             }
+
+            $numbers = collect(array_keys($responseData))
+                ->map(fn($number) => str_pad($number, 2, '0', STR_PAD_LEFT))
+                ->toArray();
 
             AiPrediction::create([
                 'prediction_date' => $tomorrow,
                 'region' => $region,
-                'prediction_type' => 'so_lo',
-                'numbers' => $new_lo_data,
+                'prediction_type' => $prediction_type,
+                'numbers' => $numbers,
             ]);
-        }
 
-        if (!$prediction_de) {
-            $getPredictionDeToAI = Http::withHeaders([
-                'Accept' => 'application/json',
-            ])->get(config('services.base_api_ai') . $api_get_de);
-
-            if ($getPredictionDeToAI->failed()) {
-                Log::error('Lấy dữ liệu dự đoán ' . $region . ' Đề từ AI không thành công', [
-                    'status' => $getPredictionDeToAI->status(),
-                    'body' => $getPredictionDeToAI->body(),
-                ]);
-            }
-
-            $responseDataDe = $getPredictionDeToAI->json();
-            if (!is_array($responseData)) {
-                Log::error('Kết quả trả về từ AI không hợp lệ ' . $getPredictionLoToAI->json());
-            }
-            $new_de_data = [];
-
-            foreach (array_keys($responseDataDe) as $nd) {
-                $new_de_data[] = str_pad($nd, 2, '0', STR_PAD_LEFT);
-            }
-
-            AiPrediction::create([
-                'prediction_date' => $tomorrow,
-                'region' => $region,
-                'prediction_type' => 'so_de',
-                'numbers' => $new_de_data,
+            Log::info("Tạo prediction {$region} {$type_name} thành công", [
+                'numbers_count' => count($numbers)
             ]);
-        }
 
-        Log::info('Thêm dữ liệu thành công');
-        return;
+            return true;
+        } catch (\Exception $e) {
+            Log::error("Exception khi xử lý prediction {$region} {$type_name}", [
+                'message' => $e->getMessage(),
+                'url' => config('services.base_api_ai') . $api_endpoint
+            ]);
+            return false;
+        }
     }
 
     public function AiChatBot($conversation, $responseType = 'quick')
@@ -503,24 +551,48 @@ class AiPredictionService
 
             case 'detailed':
                 return "Hãy trả lời theo phong cách CHUYÊN GIA PHÂN TÍCH CHUYÊN SÂU:
-                - Bắt đầu bằng tổng quan tình hình thị trường xổ số hôm nay
-                - Phân tích từng miền chi tiết với:
-                + Top 3 số HOT nhất và lý do cụ thể
-                + Số CHỐT đặc biệt với độ tin cậy cao
-                + Các cặp số có mẫu hình mạnh
-                + Xu hướng tăng/giảm dựa trên dữ liệu
-                + So sánh với các ngày trước đó
-                - Tạo bảng phân tích rõ ràng với các cột:
-                + Số dự đoán | Tần suất | Xu hướng | Độ tin cậy
-                - Đưa ra chiến lược chơi thông minh:
-                + Số an toàn (tỷ lệ thành công cao)
-                + Số mạo hiểm (tỷ lệ thưởng cao)
-                + Cách phân bổ vốn hợp lý
-                - Cảnh báo rủi ro và lời khuyên chơi có trách nhiệm
-                - Sử dụng emoji chuyên nghiệp: 📊📈🎯💎⚡🔍💰🌟📋🚀
-                - Kết thúc bằng tổng kết và lời chúc may mắn có trách nhiệm
-                - Độ dài: ít nhất là 10-15 đoạn để tạo sự chuyên nghiệp và tin cậy càng chi tiết càng tốt";
+                    - Bắt đầu bằng tổng quan tình hình thị trường xổ số hôm nay
+                    - Phân tích từng miền chi tiết với:
+                    + Top 3 số HOT nhất và lý do cụ thể
+                    + Số CHỐT đặc biệt với độ tin cậy cao
+                    + Các cặp số có mẫu hình mạnh
+                    + Xu hướng tăng/giảm dựa trên dữ liệu
+                    + So sánh với các ngày trước đó
+                    - Tạo bảng phân tích rõ ràng với các cột:
+                    + Số dự đoán | Tần suất | Xu hướng | Độ tin cậy
+                    - Đưa ra chiến lược chơi thông minh:
+                    + Số an toàn (tỷ lệ thành công cao)
+                    + Số mạo hiểm (tỷ lệ thưởng cao)
+                    + Cách phân bổ vốn hợp lý
+                    - Cảnh báo rủi ro và lời khuyên chơi có trách nhiệm
+                    - Sử dụng emoji chuyên nghiệp: 📊📈🎯💎⚡🔍💰🌟📋🚀
+                    - Kết thúc bằng tổng kết và lời chúc may mắn có trách nhiệm
+                    - Độ dài: ít nhất là 10-15 đoạn để tạo sự chuyên nghiệp và tin cậy càng chi tiết càng tốt";
 
+            case 'dream':
+                return "Hãy trả lời theo phong cách CHUYÊN GIA GIẢI MÃ GIẤC MƠ:
+                    - Bắt đầu bằng lời chào ấm áp và tạo không khí thần bí
+                    - Phân tích ý nghĩa tâm linh và tâm lý của giấc mơ:
+                    + Biểu tượng chính trong giấc mơ và ý nghĩa sâu xa
+                    + Kết nối với trạng thái tâm lý hiện tại của người mơ
+                    + Thông điệp tiềm thức muốn gửi gắm
+                    - Giải mã theo các góc độ khác nhau:
+                    + Tâm lý học (Jung, Freud)
+                    + Tâm linh phương Đông
+                    + Dân gian Việt Nam
+                    + Biểu tượng văn hóa
+                    - Đưa ra những con số may mắn liên quan:
+                    + Số theo biểu tượng chính (ví dụ: rắn = 67, nước = 12)
+                    + Số theo cảm xúc trong mơ
+                    + Số theo thời gian và bối cảnh
+                    - Lời khuyên thực tế:
+                    + Cách áp dụng thông điệp trong cuộc sống
+                    + Những điều cần chú ý trong thời gian tới
+                    + Cách chơi số dựa trên giấc mơ một cách có trách nhiệm
+                    - Sử dụng emoji phù hợp: 🌙✨🔮💫🌟🎯💎🦋🌸🙏
+                    - Tạo cảm giác kết nối tâm linh và sự tin tưởng
+                    - Kết thúc bằng lời chúc phúc và động viên tích cực
+                    - Độ dài: 8-12 đoạn để tạo sự thuyết phục và chuyên sâu";
             default:
                 return "Hãy trả lời một cách thân thiện và hữu ích.";
         }
