@@ -443,6 +443,7 @@
                 await this.fetchLotteryResult();
                 await this.fetchAiPredictionData();
                 this.renderTickerContent();
+                await this.fetchAiPredictionForNextDraw();
                 await this.initLotteryDrawing(this.data.filters.region, this.data.filters.date, this.data.provinceXSTN);
             },
             randomConfidence(min = 60, max = 95) {
