@@ -121,16 +121,16 @@ class LotteryResultController extends Controller
 
         switch ($region) {
             case 'XSMB':
-                $cutoff = $today->setTime(18, 30);
+                $cutoff = $today->setTime(18, 00);
                 break;
             case 'XSMN':
-                $cutoff = $today->setTime(16, 30);
+                $cutoff = $today->setTime(16, 00);
                 break;
             case 'XSMT':
-                $cutoff = $today->setTime(17, 30);
+                $cutoff = $today->setTime(17, 00);
                 break;
             default:
-                $cutoff = $today->setTime(18, 30);
+                $cutoff = $today->setTime(18, 00);
         }
 
         $dateToUse = $now->lt($cutoff) ? $now->subDay() : $today;
