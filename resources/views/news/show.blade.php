@@ -38,30 +38,30 @@
     <aside class="lg:col-span-3 mt-12 lg:mt-0">
       <div class="bg-white rounded-2xl p-5 shadow-md">
         <h2 class="text-xl font-bold text-gray-700 mb-4 border-b pb-2">Tin liên quan</h2>
-        @php
-          $related = $relatedNews ?? \App\Models\News::where('id', '!=', $news->id)->latest()->take(4)->get();
-        @endphp
-        @foreach($related as $item)
-          <div class="mb-6 last:mb-0 bg-[#ddeceb] rounded-xl p-3 hover:shadow transition">
-            <a href="{{ route('news.show', $item->slug) }}">
-              <img src="{{ $item->image ? asset('uploads/news/'.$item->image) : 'https://source.unsplash.com/400x250/?news' }}"
-                   class="w-full h-32 object-cover rounded-xl mb-2">
-            </a>
-            <div class="flex items-center text-xs text-gray-500 mb-2">
-              <span class="mr-2">
-                <svg class="inline w-4 h-4 mr-1 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 10a4 4 0 100-8 4 4 0 000 8zM2 18a8 8 0 0116 0H2z" /></svg>
-                {{ $item->author ?? 'Admin' }}
-              </span>
-              <span>
-                {{ \Carbon\Carbon::parse($item->created_at ?? $item->date)->format('d-m-Y') }}
-              </span>
+        @if($relatedNews->isEmpty())
+          <div class="text-gray-400 text-sm">Không có tin liên quan.</div>
+        @else
+          @foreach($relatedNews as $item)
+            <div class="mb-6 last:mb-0 bg-[#ddeceb] rounded-xl p-3 hover:shadow transition">
+              <a href="{{ route('news.show', $item->slug) }}">
+                <img src="{{ $item->image ? asset('uploads/news/'.$item->image) : 'https://source.unsplash.com/400x250/?news' }}"
+                     class="w-full h-32 object-cover rounded-xl mb-2">
+              </a>
+              <div class="flex items-center text-xs text-gray-500 mb-2">
+                <span class="mr-2">
+                  <svg class="inline w-4 h-4 mr-1 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 10a4 4 0 100-8 4 4 0 000 8zM2 18a8 8 0 0116 0H2z" /></svg>
+                  {{ $item->author ?? 'Admin' }}
+                </span>
+                <span>
+                  {{ \Carbon\Carbon::parse($item->created_at)->format('d-m-Y') }}
+                </span>
+              </div>
+              <a href="{{ route('news.show', $item->slug) }}" class="block font-semibold text-base text-gray-800 leading-tight mb-1 line-clamp-2">
+                {{ $item->title }}
+              </a>
             </div>
-            <a href="{{ route('news.show', $item->slug) }}" class="block font-semibold text-base text-gray-800 leading-tight mb-1 line-clamp-2">
-              {{ $item->title }}
-            </a>
-
-          </div>
-        @endforeach
+          @endforeach
+        @endif
       </div>
     </aside>
   </div>
