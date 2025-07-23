@@ -2,48 +2,28 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\LotteryResultSent;
-use App\Jobs\AiPredictionForNextDrawJob;
-use App\Models\LotteryResult;
-use App\Service\LotoNumberService;
+use App\Service\HandleDateService;
 use App\Service\LotteryResultService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Log;
+use App\Service\SimulateLotteryDrawService;
 
 class LotteryResultController extends Controller
 {
-    public function __construct(protected LotteryResultService $lottery_result_service, protected LotoNumberService $loto_number_service) {}
+    public function __construct(
+        protected LotteryResultService $lottery_result_service,
+        protected SimulateLotteryDrawService $simulateService,
+        protected HandleDateService $date_service
+    ) {}
 
     public function lotteryResult(Request $request)
     {
         $region = $request->filled('region') ? $request->region : 'XSMB';
 
-        $date = $this->handleDate($region, $request->date);
+        $date = $this->date_service->handleDateLotteryResult($region, $request->date);
 
-        if ($region == 'XSMB') {
-            $lottery = LotteryResult::where('draw_date', $date)->where('region', $region)->first();
+        $lottery = $this->lottery_result_service->lotteryResult($region, $date);
 
-            return response()->json(['lottery' => $lottery, 'numbers' => $lottery?->getAllNumbers(), 'loto' => $lottery?->getLotoNumbers(), 'date' => $date, 'region' => $region], 200);
-        } else {
-            $lotteries = LotteryResult::where('draw_date', $date)->where('region', $region)->get();
-
-            $results = [];
-
-            foreach ($lotteries as $lottery) {
-                $results[] = [
-                    'lottery' => $lottery,
-                    'numbers' => $lottery?->getAllNumbers(),
-                    'loto' => $lottery?->getLotoNumbers(),
-                ];
-            }
-
-            return response()->json([
-                'results' => $results,
-                'date' => $date,
-                'region' => $region,
-            ]);
-        }
+        return response()->json($lottery, 200);
     }
 
     public function insertLotteryResult(Request $request)
@@ -55,86 +35,25 @@ class LotteryResultController extends Controller
             '*.region' => 'required|string'
         ]);
 
-        $date = now();
-        $newNumberData = [];
-        $new_lotteries = collect();
-        foreach ($data as $station) {
-            $new_lottery = $this->lottery_result_service->processNewResult($date, $station['region'], $station['province'], $station['prizes']);
-            $newNumberData[] = [
-                "region" => $station['region'],
-                "province" => $station['province'],
-                'prizes' => $new_lottery->getAllNumbers(),
-            ];
+        $new_lotteries = $this->lottery_result_service->insertLotteryResult($data);
 
-            $this->loto_number_service->processNewResult($new_lottery);
-            $new_lotteries->push($new_lottery);
-        }
-
-        $checkSuccessInsert = $this->checkSuccessInsert($new_lotteries);
-        if ($checkSuccessInsert) {
-            AiPredictionForNextDrawJob::dispatch($checkSuccessInsert);
-        }
-
-        broadcast(new LotteryResultSent($newNumberData));
-        return response()->json([$newNumberData], 200);
+        return response()->json($new_lotteries, 200);
     }
 
-    private function checkSuccessInsert($new_lotteries)
+    public function simulateLotteryDraw(Request $request)
     {
-        if ($new_lotteries->isEmpty()) {
-            return false;
+        // $request->validate(['region' => 'required']);
+        try {
+            $region = $request->input('region', 'XSMN');
+            $date = $this->date_service->handleDateAiPrediction($region);
+            $dataSimulate = $this->simulateService->generateLotteryResult($region, $date);
+
+            return response()->json([
+                'dataSimulate' => $dataSimulate,
+                'date' => $date
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 500);
         }
-
-        foreach ($new_lotteries as $new_lottery) {
-            $count = $new_lottery->getAllNumbers()->count();
-
-            switch ($new_lottery->region) {
-                case 'XSMB':
-                    if ($count !== 27) {
-                        return false;
-                    }
-                    break;
-
-                case 'XSMN':
-                case 'XSMT':
-                    if ($count !== 18) {
-                        return false;
-                    }
-                    break;
-
-                default:
-                    return false;
-            }
-        }
-
-        return $new_lotteries->first()->region;
-    }
-
-    private function handleDate($region, $date)
-    {
-        if ($date) {
-            return $date;
-        }
-
-        $now = now();
-        $today = today();
-
-        switch ($region) {
-            case 'XSMB':
-                $cutoff = $today->setTime(18, 00);
-                break;
-            case 'XSMN':
-                $cutoff = $today->setTime(16, 00);
-                break;
-            case 'XSMT':
-                $cutoff = $today->setTime(17, 00);
-                break;
-            default:
-                $cutoff = $today->setTime(18, 00);
-        }
-
-        $dateToUse = $now->lt($cutoff) ? $now->subDay() : $today;
-
-        return $dateToUse->format('Y-m-d');
     }
 }

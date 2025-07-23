@@ -2,9 +2,9 @@
 
 namespace App\Jobs;
 
-use App\Service\AiPredictionService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use JobGetPredictionService;
 
 class AiPredictionForNextDrawJob implements ShouldQueue
 {
@@ -44,7 +44,7 @@ class AiPredictionForNextDrawJob implements ShouldQueue
             ],
         };
 
-        $service = app(AiPredictionService::class);
+        $service = app(JobGetPredictionService::class);
 
         $service->generateAndStorePredictionForTomorrow($init['region'], $init['api_add'], $init['api_get_lo'], $init['api_get_de']);
     }

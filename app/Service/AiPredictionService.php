@@ -13,6 +13,13 @@ use PDO;
 
 class AiPredictionService
 {
+    private $dateService;
+
+    public function __construct()
+    {
+        $this->dateService = app(HandleDateService::class);
+    }
+
     public function processNewAiPrediction($numbers, $prediction_date, $province, $region, $type)
     {
         $aiPrediction = AiPrediction::create([
@@ -116,180 +123,6 @@ class AiPredictionService
         return $statis;
     }
 
-    public function generateAndStorePredictionForTomorrow($region, $api_add, $api_get_lo, $api_get_de)
-    {
-        $tomorrow = now()->addDay()->format('Y-m-d');
-
-        // Tối ưu query bằng cách lấy cả 2 loại prediction trong 1 lần
-        $existingPredictions = AiPrediction::where('region', $region)
-            ->where('prediction_date', $tomorrow)
-            ->whereIn('prediction_type', ['so_lo', 'so_de'])
-            ->pluck('prediction_type')
-            ->toArray();
-
-        $prediction_lo_exists = in_array('so_lo', $existingPredictions);
-        $prediction_de_exists = in_array('so_de', $existingPredictions);
-
-        // Early return nếu cả 2 prediction đã tồn tại
-        if ($prediction_lo_exists && $prediction_de_exists) {
-            Log::info("Predictions for {$region} tomorrow already exist");
-            return;
-        }
-
-        $lotteryTodayQuery = LotteryResult::where('region', $region)
-            ->where('draw_date', today())
-            ->get();
-
-        if ($lotteryTodayQuery->isEmpty()) {
-            Log::warning("Không tìm thấy kết quả {$region} hôm nay");
-            return;
-        }
-
-        $lotteryToday = $this->formatLotteryData($lotteryTodayQuery, $region);
-
-        // Chỉ gọi API add data nếu cần thiết
-        if (!$prediction_lo_exists || !$prediction_de_exists) {
-            if (!$this->addLotteryDataToAI($lotteryToday, $api_add, $region)) {
-                return; // Stop execution if adding data fails
-            }
-        }
-
-        // Xử lý prediction lô
-        if (!$prediction_lo_exists) {
-            $this->processPrediction($region, $tomorrow, $api_get_lo, 'so_lo', 'Lô');
-        }
-
-        // Xử lý prediction đề
-        if (!$prediction_de_exists) {
-            $this->processPrediction($region, $tomorrow, $api_get_de, 'so_de', 'Đề');
-        }
-
-        Log::info("Thêm dữ liệu {$region} thành công");
-    }
-
-    /**
-     * Format lottery data theo region
-     */
-    private function formatLotteryData($lotteryResults, $region)
-    {
-        $lotteryToday = [
-            "date" => today()->format('d-m-Y'),
-        ];
-
-        foreach ($lotteryResults as $lt) {
-            if ($region === 'XSMB') {
-                $lotteryToday['special_prize'] = $lt->special_prize[0];
-                $lotteryToday['all_results'] = [
-                    "ĐB" => $lt->special_prize,
-                    "1" => $lt->first_prize,
-                    "2" => $lt->second_prize,
-                    "3" => $lt->third_prize,
-                    "4" => $lt->fourth_prize,
-                    "5" => $lt->fifth_prize,
-                    "6" => $lt->sixth_prize,
-                    "7" => $lt->seventh_prize,
-                ];
-            } else {
-                $lotteryToday['special_prize'][] = $lt->special_prize[0];
-                $lotteryToday['all_results'][$lt->region] = [
-                    "ĐB" => $lt->special_prize,
-                    "1" => $lt->first_prize,
-                    "2" => $lt->second_prize,
-                    "3" => $lt->third_prize,
-                    "4" => $lt->fourth_prize,
-                    "5" => $lt->fifth_prize,
-                    "6" => $lt->sixth_prize,
-                    "7" => $lt->seventh_prize,
-                    "8" => $lt->eighth_prize
-                ];
-            }
-        }
-
-        return $lotteryToday;
-    }
-
-    /**
-     * Thêm dữ liệu lottery vào AI
-     */
-    private function addLotteryDataToAI($lotteryData, $api_add, $region)
-    {
-        try {
-            $response = Http::timeout(30)
-                ->withHeaders(['Accept' => 'application/json'])
-                ->post(config('services.base_api_ai') . $api_add, $lotteryData);
-
-            if ($response->failed()) {
-                Log::error("Thêm dữ liệu {$region} vào AI không thành công", [
-                    'status' => $response->status(),
-                    'body' => $response->body(),
-                    'url' => config('services.base_api_ai') . $api_add
-                ]);
-                return false;
-            }
-
-            return true;
-        } catch (\Exception $e) {
-            Log::error("Exception khi thêm dữ liệu {$region} vào AI", [
-                'message' => $e->getMessage(),
-                'url' => config('services.base_api_ai') . $api_add
-            ]);
-            return false;
-        }
-    }
-
-    /**
-     * Xử lý prediction từ AI
-     */
-    private function processPrediction($region, $tomorrow, $api_endpoint, $prediction_type, $type_name)
-    {
-        try {
-            $response = Http::timeout(30)
-                ->withHeaders(['Accept' => 'application/json'])
-                ->get(config('services.base_api_ai') . $api_endpoint);
-
-            if ($response->failed()) {
-                Log::error("Lấy dữ liệu dự đoán {$region} {$type_name} từ AI không thành công", [
-                    'status' => $response->status(),
-                    'body' => $response->body(),
-                    'url' => config('services.base_api_ai') . $api_endpoint
-                ]);
-                return false;
-            }
-
-            $responseData = $response->json();
-
-            if (!is_array($responseData) || empty($responseData)) {
-                Log::error("Kết quả trả về từ AI không hợp lệ cho {$region} {$type_name}", [
-                    'response' => $responseData
-                ]);
-                return false;
-            }
-
-            $numbers = collect(array_keys($responseData))
-                ->map(fn($number) => str_pad($number, 2, '0', STR_PAD_LEFT))
-                ->toArray();
-
-            AiPrediction::create([
-                'prediction_date' => $tomorrow,
-                'region' => $region,
-                'prediction_type' => $prediction_type,
-                'numbers' => $numbers,
-            ]);
-
-            Log::info("Tạo prediction {$region} {$type_name} thành công", [
-                'numbers_count' => count($numbers)
-            ]);
-
-            return true;
-        } catch (\Exception $e) {
-            Log::error("Exception khi xử lý prediction {$region} {$type_name}", [
-                'message' => $e->getMessage(),
-                'url' => config('services.base_api_ai') . $api_endpoint
-            ]);
-            return false;
-        }
-    }
-
     public function AiChatBot($conversation, $responseType = 'quick')
     {
         try {
@@ -309,7 +142,7 @@ class AiPredictionService
                 'success' => true,
                 'message' => $aiResponse,
                 'data' => [
-                    'prediction_date' => $this->getPredictionDate()->format('d/m/Y'),
+                    'prediction_date' => $this->dateService->handleDate()->format('d/m/Y'),
                 ]
             ];
         } catch (\Exception $e) {
@@ -317,14 +150,9 @@ class AiPredictionService
         }
     }
 
-    private function getPredictionDate()
-    {
-        return now()->lt(today()->setTime(18, 30)) ? today() : now()->addDay();
-    }
-
     private function getCachedPredictionData()
     {
-        $date = $this->getPredictionDate();
+        $date = $this->dateService->handleDate();
         $cacheKey = "ai_prediction_data_{$date->format('Y-m-d')}";
 
         return Cache::remember($cacheKey, now()->addHours(6), function () use ($date) {
@@ -344,7 +172,7 @@ class AiPredictionService
 
     private function getCachedStatisticsData()
     {
-        $date = $this->getPredictionDate();
+        $date = $this->dateService->handleDate();
         $cacheKey = "ai_statistics_data_{$date->format('Y-m-d')}";
 
         return Cache::remember($cacheKey, now()->addHours(12), function () use ($date) {
@@ -387,7 +215,7 @@ class AiPredictionService
 
     private function buildAiContext($predictionData, $statisticsData)
     {
-        $date = $this->getPredictionDate();
+        $date = $this->dateService->handleDate();
 
         $context = [
             'prediction_data' => $predictionData,
@@ -600,7 +428,7 @@ class AiPredictionService
 
     public function clearPredictionCache()
     {
-        $date = $this->getPredictionDate();
+        $date = $this->dateService->handleDate();
         Cache::forget("ai_prediction_data_{$date->format('Y-m-d')}");
         Cache::forget("ai_statistics_data_{$date->format('Y-m-d')}");
     }
@@ -618,7 +446,7 @@ class AiPredictionService
         }
 
         $region = $request->filled('region') ? $request->region : 'XSMB';
-        $date = $this->handleDate($region);
+        $date = $this->dateService->handleDateAiPrediction($region);
 
         $predictionQuery = AiPrediction::where('region', $region)->where('prediction_date', $date);
 
@@ -714,29 +542,5 @@ class AiPredictionService
         }
 
         return $combinations;
-    }
-
-    private function handleDate($region)
-    {
-        $now = now();
-        $today = today();
-
-        switch ($region) {
-            case 'XSMB':
-                $cutoff = $today->setTime(18, 30);
-                break;
-            case 'XSMN':
-                $cutoff = $today->setTime(16, 30);
-                break;
-            case 'XSMT':
-                $cutoff = $today->setTime(17, 30);
-                break;
-            default:
-                // fallback: mặc định giống XSMB
-                $cutoff = $today->setTime(18, 30);
-        }
-
-        $date = $now->lt($cutoff) ? $today : $now->addDay();
-        return $date->format('Y-m-d');
     }
 }

@@ -166,9 +166,6 @@
     <script>
         const app = {
             data: {
-                loading: false,
-                submitting: false,
-                showHistoryModal: false,
                 filters: {
                     date: '',
                     region: 'XSMB'
@@ -271,7 +268,6 @@
             },
 
             async fetchLotteryResult() {
-                this.data.loading = true;
                 document.getElementById('loading-indicator').classList.remove('hidden');
                 try {
                     const params = new URLSearchParams({
@@ -298,7 +294,6 @@
                     this.showToast('Có lỗi xảy ra khi lấy dữ liệu xổ số', 'error');
                     console.error(error);
                 } finally {
-                    this.data.loading = false;
                     document.getElementById('loading-indicator').classList.add('hidden');
                 }
             },
@@ -399,7 +394,6 @@
             },
 
             async fetchStatisticsData() {
-                this.data.submitting = true;
                 document.getElementById('submit-stats').textContent = 'Đang xử lý'
 
                 try {
@@ -422,7 +416,6 @@
                     this.showToast('Có lỗi xảy ra khi lấy dữ liệu thống kê', 'error');
                     console.error(error);
                 } finally {
-                    this.data.submitting = false;
                     document.getElementById('submit-stats').textContent = 'Áp dụng bộ lọc';
                 }
             },
@@ -508,13 +501,11 @@
             },
 
             openHistoryModal() {
-                this.data.showHistoryModal = true;
                 document.getElementById('history-modal').classList.remove('hidden');
                 this.renderHistoryModal();
             },
 
             closeHistoryModal() {
-                this.data.showHistoryModal = false;
                 document.getElementById('history-modal').classList.add('hidden');
             },
 

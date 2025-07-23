@@ -36,7 +36,7 @@
                         <option value="XSMT">Miền Trung</option>
                         <option value="XSMN">Miền Nam</option>
                     </select>
-                    <button class="btn btn-primary">Quay thử</button>
+                    <button class="btn btn-primary" id="simulate-draw">Quay thử</button>
 
                 </div>
             </div>
@@ -53,5 +53,298 @@
         </section>
     </div>
 
-    <script></script>
+    <script>
+        const app = {
+            data: {
+                filters: {
+                    date: '',
+                    region: 'XSMB'
+                },
+                lotteryXSMB: {},
+                lotoNumbersXSMB: [],
+                lotteryXSTN: [],
+                provinceXSTN: [
+                ],
+                currentDate: new Date(),
+                region: 'XSMB',
+                lotteryDrawing: null,
+                simulateData: [],
+                simulateIntervalId: null
+            },
+
+            prizeStructure: {
+                XSMB: [
+                    { code: 'G.ĐB', key: 'special_prize', gridClass: 'grid grid-cols-1', className: 'special-prize', count: 1 },
+                    { code: 'G.1', key: 'first_prize', gridClass: 'grid grid-cols-1', className: '', count: 1 },
+                    { code: 'G.2', key: 'second_prize', gridClass: 'grid grid-cols-2', className: '', count: 2 },
+                    { code: 'G.3', key: 'third_prize', gridClass: 'grid grid-cols-3', className: '', count: 6 },
+                    { code: 'G.4', key: 'fourth_prize', gridClass: 'grid grid-cols-2 md:grid-cols-4', className: '', count: 4 },
+                    { code: 'G.5', key: 'fifth_prize', gridClass: 'grid grid-cols-3', className: '', count: 6 },
+                    { code: 'G.6', key: 'sixth_prize', gridClass: 'grid grid-cols-3', className: '', count: 3 },
+                    { code: 'G.7', key: 'seventh_prize', gridClass: 'grid grid-cols-4', className: 'last-two', count: 4 }
+                ],
+                XSTN: [
+                    { code: 'G', key: 'province', className: 'date-codes', count: 1 },
+                    { code: '8', key: 'eighth_prize', className: 'last-two', count: 1 },
+                    { code: '7', key: 'seventh_prize', className: '', count: 1 },
+                    { code: '6', key: 'sixth_prize', className: '', count: 3 },
+                    { code: '5', key: 'fifth_prize', className: '', count: 1 },
+                    { code: '4', key: 'fourth_prize', className: '', count: 7 },
+                    { code: '3', key: 'third_prize', className: '', count: 2 },
+                    { code: '2', key: 'second_prize', className: '', count: 1 },
+                    { code: '1', key: 'first_prize', className: '', count: 1 },
+                    { code: 'ĐB', key: 'special_prize', className: 'special-prize', count: 1 }
+                ]
+            },
+            init() {
+                this.initializeData();
+                this.setupEventListeners();
+            },
+
+            setupEventListeners() {
+                document.getElementById('filter-region').addEventListener('change', () => this.filterRegion());
+                document.getElementById('simulate-draw').addEventListener('click', () => this.simulateDraw());
+            },
+
+            async initializeData() {
+                this.fetchSimulateDraw();
+            },
+
+            async fetchSimulateDraw() {
+                try {
+                    const params = new URLSearchParams({
+                        region: this.data.filters.region
+                    });
+                    const response = await fetch(`{{ route('simulate-draw') }}?${params}`, {
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    if (!response.ok) throw new Error('Failed to fetch lottery data');
+                    const data = await response.json();
+
+                    this.data.simulateData = data.dataSimulate;
+                    this.data.currentDate = data.date;
+
+                    if (this.data.filters.region !== 'XSMB'){
+                        this.data.lotteryXSTN = data.dataSimulate;
+                        this.data.provinceXSTN = Object.values(this.data.lotteryXSTN).map((it) => it.lottery?.province || null);
+                    }
+
+                    this.renderTickerContent();
+
+                } catch (error) {
+                    this.showToast('Có lỗi xảy ra khi lấy dữ liệu xổ số', 'error');
+                    console.error(error);
+                }
+            },
+
+            renderTickerContent() {
+                const content = document.getElementById('ticker-content');
+                content.innerHTML = '';
+                const lotteryTitle = {
+                    XSMB: 'XSMB - Kết quả xổ số miền Bắc',
+                    XSMN: 'XSMN - Kết quả xổ số miền Nam',
+                    XSMT: 'XSMT - Kết quả xổ số miền Trung'
+                }[this.data.region] || 'Kết quả xổ số';
+
+                let html = `
+                    <div class="container" id="lottery-result">
+                        <div class="breadcrumb">
+                            <a href="#" class="text-blue-600">${lotteryTitle} - ${this.formatDate(this.data.currentDate)}</a>
+                        </div>
+                `;
+
+                if (this.data.filters.region === 'XSMB') {
+                    html += `
+                        <table class="results-table w-full text-left">
+                            ${this.prizeStructure.XSMB.map(prize => `
+                                <tr>
+                                    <td class="prize-code py-2 pr-4">${prize.code}</td>
+                                    <td class="prize-numbers ${prize.gridClass}">
+                                        ${this.getPrizeNumbers(prize).map(number => `
+                                            <div class="number ${prize.className}">
+                                                ${number ? number : '<div class="loading-number"></div>'}
+                                            </div>
+                                        `).join('')}
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </table>
+                    </div>
+                    <div>
+                        <div id="lottery-result-statis">
+                            <div class="region-result">
+                                <div class="region-title text-lg font-semibold"><h3>Tổng hợp loto - ${this.formatDate(this.data.currentDate)}</h3></div>
+                                ${Array.from({ length: 10 }, (_, i) => `
+                                    <div class="result-numbers flex gap-2 my-2">
+                                        <div>Đầu ${i}: </div>
+                                        ${this.getLotoByHead(this.data.lotoNumbersXSMB, i).map(({ item, index }) => `
+                                            <div class="number-ball text-white p-2 bg-gray-100 rounded ${index === 26 ? 'bg-red text-white' : ''}">
+                                                ${item}
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }else{
+                    html +=`
+                        <table class="results-table w-full text-left">
+                            ${this.prizeStructure.XSTN.map(prize => `
+                                <tr>
+                                    <td class="prize-code py-2 pr-4">${prize.code}</td>
+                                    ${Object.values(this.data.lotteryXSTN).map(lottery =>`
+                                        <td class="prize-numbers">
+                                            ${this.getPrizeNumbersXSTN(prize, lottery.lottery).map(number => `
+                                                <div class="number ${prize.className} w-full">
+                                                    ${number ? number : '<div class="loading-number"></div>'}
+                                                </div>
+                                            `).join('')}
+                                        </td>
+                                    `).join('')}
+                                </tr>
+                            `).join('')}
+                        </table>
+
+                    </div>
+                    <div>
+                        ${Object.values(this.data.lotteryXSTN).map(it => `
+                            <div class="lottery-result-statis" data-province="${it.lottery?.province ?? ''}">
+                                <div class="region-result">
+                                    <div class="region-title text-lg font-semibold"><h3>Tổng hợp loto - ${it.lottery?.province ?? 'Chưa xác định'} - ${this.formatDate(this.data.currentDate)}</h3></div>
+                                    ${Array.from({ length: 10 }, (_, i) => `
+                                        <div class="result-numbers flex gap-2 my-2">
+                                            <div>Đầu ${i}: </div>
+                                            ${this.getLotoByHead(it.loto ,i)? this.getLotoByHead(it.loto ,i).map(({ item, index }) => `
+                                                <div class="number-ball text-white p-2 bg-gray-100 rounded ${index === 17 ? 'bg-red text-white' : ''}">
+                                                    ${item ?? ''}
+                                                </div>
+                                            `).join('') : ''}
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `)}
+                    `;
+                }
+
+                content.innerHTML = html;
+            },
+
+            getPrizeNumbers(prize) {
+                const data = this.data.lotteryXSMB[prize.key] || [];
+                const result = [];
+                for (let i = 0; i < prize.count; i++) {
+                    result.push(data[i] || null);
+                }
+
+                return result;
+            },
+
+            async filterRegion(){
+                this.data.filters.region = document.getElementById('filter-region').value;
+
+                if (this.data.simulateIntervalId) {
+                    clearInterval(this.data.simulateIntervalId);
+                    this.data.simulateIntervalId = null;
+                }
+
+                await this.fetchSimulateDraw();
+            },
+
+            async simulateDraw(){
+                this.renderTickerContent();
+
+                this.data.lotteryDrawing = window.createLotterySystem(this.data.filters.region);
+
+                if (this.data.filters.region === 'XSMB'){
+                    this.data.lotteryDrawing.startDrawing();
+                    let data = [];
+                    let index = 0;
+                    this.data.simulateIntervalId = setInterval(() => {
+
+                        if (index >= this.data.simulateData.length) {
+                            clearInterval(this.data.simulateIntervalId);
+                            return;
+                        }
+
+                        data.push(this.data.simulateData[index]);
+                        this.data.lotteryDrawing.onSocketData([...data]);
+
+                        index++;
+                    }, 1000);
+
+                }else{
+                    this.data.lotteryDrawing.startAllStationDrawings(this.data.provinceXSTN);
+                    let index = 0;
+                    const data = {};
+
+                    this.data.simulateIntervalId = setInterval(() => {
+                        let hasMore = false;
+
+                        this.data.simulateData.forEach(item => {
+                            const province = item.lottery.province;
+                            const numbers = item.lottery.allNumbers;
+
+                            if (index < numbers.length) {
+                                if (!data[province]) {
+                                    data[province] = [];
+                                }
+
+                                data[province].push(numbers[index]);
+                                hasMore = true;
+                            }
+                        });
+
+                        if (!hasMore) {
+                            clearInterval(this.data.simulateIntervalId);
+                            return;
+                        }
+
+                        this.data.lotteryDrawing.onSocketData({ ...data });
+
+                        index++;
+                    }, 1000);
+                }
+
+            },
+
+            getPrizeNumbersXSTN(prize, lottery) {
+                const safeLottery = lottery ?? {};
+                const data = safeLottery[prize.key] || [];
+                const result = [];
+
+                for (let i = 0; i < prize.count; i++) {
+                    result.push(
+                        prize.key === 'province'
+                            ? (data ?? null)
+                            : (Array.isArray(data) ? (data[i] ?? null) : null)
+                    );
+                }
+                return result;
+            },
+
+            getLotoByHead(lottery, head) {
+                return lottery?.map((item, index) => ({ item, index }))
+                    .filter(({ item }) => item.charAt(0) == head);
+            },
+
+            formatDate(date) {
+                return new Date(date).toLocaleDateString('vi-VN');
+            },
+
+            playNumbers(index = 0) {
+                if (index >= numbers.length) return;
+
+                data.push(numbers[index]);
+                this.data.lotteryDrawing.onSocketData([...data]);
+
+                setTimeout(() => {
+                    playNumbers(index + 1);
+                }, 1000);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => app.init());
+    </script>
 @endsection

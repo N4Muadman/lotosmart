@@ -199,7 +199,12 @@ export class MultiStationLotterySystem extends BaseLotteryDrawingSystem {
         }
     }
 
-    async startAllStationDrawings() {
+    async startAllStationDrawings(stations = []) {
+        if(stations){
+            this.stations = new Map(stations.map(province => [province, province]));
+            stations.forEach((province, index) => this.provinceIndexMap.set(province, index));
+        }
+
         await Promise.all([...this.stations.keys()].map(province => this.startStationDrawing(province)));
     }
 
