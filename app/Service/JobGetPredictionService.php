@@ -1,5 +1,7 @@
 <?php
 
+namespace App\Service;
+
 use App\Models\AiPrediction;
 use App\Models\LotteryResult;
 use Illuminate\Support\Facades\Http;

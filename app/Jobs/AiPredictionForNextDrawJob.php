@@ -2,9 +2,9 @@
 
 namespace App\Jobs;
 
+use App\Service\JobGetPredictionService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use JobGetPredictionService;
 
 class AiPredictionForNextDrawJob implements ShouldQueue
 {
