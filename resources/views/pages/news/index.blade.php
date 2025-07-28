@@ -39,7 +39,7 @@
     <!-- News list -->
     <main class="md:col-span-3">
       <!-- Search -->
-      <form action="{{ route('news.index') }}" method="get" class="flex flex-col md:flex-row items-center gap-4 mb-4">
+      <form action="{{ route('news.index') }}" method="get" class="flex flex-row items-center gap-4 mb-4">
         <input
           type="text"
           name="search"
@@ -89,7 +89,7 @@
 
       <!-- Pagination -->
       <div class="mt-6 flex justify-center">
-        {{ $newsList->links() }}
+        {{ $newsList->links('pagination::simple-tailwind') }}
       </div>
     </main>
   </div>

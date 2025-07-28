@@ -32,6 +32,7 @@
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="/assets/css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
 </head>
 
 <body>
@@ -53,10 +54,55 @@
                 <a href="{{ route('partner.index') }}">Đối tác</a>
             </nav>
 
-            <div class="auth-buttons">
-                <a href="#login" class="btn btn-secondary">Đăng nhập</a>
-                <a href="#register" class="btn btn-primary">Đăng ký</a>
-            </div>
+            @auth
+                @role('user')
+                    <div class="user-dropdown">
+                        <img src="{{ auth()->user()->avatar ?? asset('images/default-avatar.png') }}" alt="User Avatar"
+                            class="user-avatar" id="userAvatar">
+
+                        <div class="dropdown-menu" id="userDropdown">
+                            <div class="dropdown-header">
+                                <img src="{{ auth()->user()->avatar ?? asset('images/default-avatar.png') }}"
+                                    alt="User Avatar">
+                                <h5>{{ auth()->user()->name }}</h5>
+                                <p>{{ auth()->user()->email }}</p>
+                            </div>
+
+                            <a href="" class="dropdown-item">
+                                <i class="fas fa-user"></i>
+                                Thông tin cá nhân
+                            </a>
+
+                            <a href="" class="dropdown-item">
+                                <i class="fas fa-cog"></i>
+                                Cài đặt
+                            </a>
+
+                            <a href="" class="dropdown-item">
+                                <i class="fas fa-shopping-bag"></i>
+                                Đơn hàng của tôi
+                            </a>
+
+                            <form action="{{ route('logout') }}" method="POST" style="display: inline;">
+                                @csrf
+                                <button type="submit" class="dropdown-item logout"
+                                    onclick="return confirm('Bạn có chắc chắn muốn đăng xuất?')">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    Đăng xuất
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                @endrole
+
+                @role('admin')
+                    <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary">Vào Admin Panel</a>
+                @endrole
+            @else
+                <div class="auth-buttons">
+                    <a href="{{ route('login.form') }}" class="btn btn-secondary">Đăng nhập</a>
+                </div>
+            @endauth
         </div>
 
         <button class="mobile-toggle" id="mobileToggle">
@@ -77,8 +123,7 @@
         </ul>
 
         <div class="mobile-auth">
-            <a href="#login" class="btn btn-secondary">Đăng nhập</a>
-            <a href="#register" class="btn btn-primary">Đăng ký</a>
+            <a href="{{ route('login.form') }}" class="btn btn-secondary">Đăng nhập</a>
         </div>
     </div>
 
@@ -151,11 +196,37 @@
     <!-- Notification Toast -->
     <div class="toast-container" id="toastContainer"></div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    @if (session('success'))
+        <script>
+            toastr.success("{{ session('success') }}");
+        </script>
+    @endif
+    @if (session('error'))
+        <script>
+            toastr.error("{{ session('error') }}");
+        </script>
+    @endif
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             initializeChatbot();
             initializeMobileMenu();
+
+            const avatar = document.getElementById('userAvatar');
+            const dropdown = document.getElementById('userDropdown');
+
+            if (avatar && dropdown) {
+                avatar.addEventListener('click', function() {
+                    dropdown.classList.toggle('show');
+                });
+
+                document.addEventListener('click', function(event) {
+                    if (!dropdown.contains(event.target) && !avatar.contains(event.target)) {
+                        dropdown.classList.remove('show');
+                    }
+                });
+            }
         })
 
         let chatHistory = [];

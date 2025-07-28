@@ -19,6 +19,6 @@ class PagesController extends Controller
     }
 
     public function partner(){
-        return view('partner.index');
+        return view('pages.partner.index');
     }
 }

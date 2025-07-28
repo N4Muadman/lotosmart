@@ -32,7 +32,7 @@ class NewsController extends Controller
         // Lấy danh sách tin phân trang, mỗi trang 6 tin, giữ query string
         $newsList = $query->paginate(6)->withQueryString();
 
-        return view('news.index', compact('newsList', 'categories'));
+        return view('pages.news.index', compact('newsList', 'categories'));
     }
 
     // Trang chi tiết
@@ -48,7 +48,7 @@ class NewsController extends Controller
             ->take(4)
             ->get();
 
-        return view('news.show', compact('news', 'relatedNews'));
+        return view('pages.news.show', compact('news', 'relatedNews'));
     }
 
     // // Form thêm tin (dùng cho admin)

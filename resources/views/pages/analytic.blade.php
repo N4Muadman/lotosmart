@@ -148,7 +148,7 @@
                 <div class="flex justify-center mb-6">
                     <div class="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
                         <button id="lottery-tab"
-                            class="tab-btn px-6 py-3 rounded-md text-sm font-medium transition-all duration-200 bg-blue-500 text-white shadow-md">
+                            class="tab-btn px-6 py-2 md:py-3 rounded-md text-sm font-medium transition-all duration-200 bg-blue-500 text-white shadow-md">
                             <div class="flex items-center space-x-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -159,7 +159,7 @@
                             </div>
                         </button>
                         <button id="dream-tab"
-                            class="tab-btn px-6 py-3 rounded-md text-sm font-medium transition-all duration-200 text-gray-600 hover:text-gray-800 hover:bg-gray-50">
+                            class="tab-btn px-6 py-2 md:py-3 rounded-md text-sm font-medium transition-all duration-200 text-gray-600 hover:text-gray-800 hover:bg-gray-50">
                             <div class="flex items-center space-x-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

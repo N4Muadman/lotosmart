@@ -1,23 +1,20 @@
 const WebSocket = require('ws');
 const fetch = require('node-fetch');
 
-// Thay đổi URL API phù hợp với domain của bạn
 const LARAVEL_API_URL = 'https://petshoptuananh.store/api/new-lottery-results';
 
 let ws = null;
 let reconnectAttempts = 0;
 const maxReconnectAttempts = 5;
-const reconnectDelay = 30000; // 30 giây
+const reconnectDelay = 30000;
 let reconnectTimer = null;
 
-// Kiểm tra xem có trong khung giờ xổ số không
 function isLotteryTime() {
     const vietnamTime = new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' });
     const hour = new Date(vietnamTime).getHours();
     return hour >= 16 && hour < 19;
 }
 
-// Tính thời gian đến khung giờ xổ số tiếp theo
 function getTimeToNextLottery() {
     const vietnamTime = new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' });
     const now = new Date(vietnamTime);
@@ -26,14 +23,11 @@ function getTimeToNextLottery() {
     let nextLotteryTime = new Date(now);
 
     if (currentHour < 16) {
-        // Nếu chưa tới 16h, đợi đến 16h hôm nay
         nextLotteryTime.setHours(16, 0, 0, 0);
     } else if (currentHour >= 19) {
-        // Nếu đã qua 19h, đợi đến 16h ngày mai
         nextLotteryTime.setDate(nextLotteryTime.getDate() + 1);
         nextLotteryTime.setHours(16, 0, 0, 0);
     } else {
-        // Đang trong khung giờ xổ số
         return 0;
     }
 
@@ -41,7 +35,6 @@ function getTimeToNextLottery() {
 }
 
 function connectWebSocket() {
-    // Kiểm tra xem có trong khung giờ xổ số không
     if (!isLotteryTime()) {
         const timeToNext = getTimeToNextLottery();
         const hours = Math.floor(timeToNext / (1000 * 60 * 60));
@@ -50,7 +43,6 @@ function connectWebSocket() {
         console.log(`⏰ Hiện tại không phải khung giờ xổ số (16:00-19:00)`);
         console.log(`⏰ Sẽ thử kết nối lại sau ${hours}h ${minutes}m`);
 
-        // Đợi đến khung giờ xổ số tiếp theo
         setTimeout(() => {
             connectWebSocket();
         }, Math.min(timeToNext, 1800000)); // Tối đa 30 phút
@@ -79,12 +71,11 @@ function connectWebSocket() {
 
         ws.on('open', () => {
             console.log('✅ Đã kết nối WebSocket xổ số thành công!');
-            reconnectAttempts = 0; // Reset counter khi kết nối thành công
+            reconnectAttempts = 0;
         });
 
         ws.on('message', async (message) => {
             try {
-                // Kiểm tra lại xem có còn trong khung giờ không
                 if (!isLotteryTime()) {
                     console.log('⏰ Đã hết khung giờ xổ số, đóng kết nối...');
                     ws.close();
@@ -122,7 +113,6 @@ function connectWebSocket() {
                         } else if (prize.includes('-')) {
                             return prize.split('-').filter(p => p !== '');
                         } else {
-                            // Nếu không có dấu - thì trả về mảng chứa 1 phần tử
                             return [prize];
                         }
                     });
@@ -148,10 +138,8 @@ function connectWebSocket() {
                     headers: {
                         'Accept': 'application/json',
                         'Content-Type': 'application/json',
-                        'User-Agent': 'WebSocket-Client/1.0'
                     },
                     body: JSON.stringify(results),
-                    timeout: 10000
                 });
 
                 if (res.ok) {
@@ -184,12 +172,10 @@ function connectWebSocket() {
         ws.on('close', (code, reason) => {
             console.log(`🔌 WebSocket đã đóng kết nối - Code: ${code}, Reason: ${reason}`);
 
-            // Clear timer cũ nếu có
             if (reconnectTimer) {
                 clearTimeout(reconnectTimer);
             }
 
-            // Kiểm tra xem có còn trong khung giờ xổ số không
             if (!isLotteryTime()) {
                 console.log('⏰ Đã hết khung giờ xổ số, sẽ đợi đến khung giờ tiếp theo...');
                 const timeToNext = getTimeToNextLottery();
@@ -202,7 +188,6 @@ function connectWebSocket() {
                     connectWebSocket();
                 }, Math.min(timeToNext, 1800000)); // Tối đa 30 phút
             } else {
-                // Vẫn trong khung giờ xổ số, thử kết nối lại
                 if (reconnectAttempts < maxReconnectAttempts) {
                     reconnectAttempts++;
                     console.log(`⏰ Đang thử kết nối lại sau ${reconnectDelay / 1000} giây... (Lần thử: ${reconnectAttempts}/${maxReconnectAttempts})`);
@@ -244,10 +229,8 @@ function connectWebSocket() {
     }
 }
 
-// Khởi tạo kết nối
 connectWebSocket();
 
-// Xử lý tín hiệu dừng
 process.on('SIGINT', () => {
     console.log('🛑 Đang dừng WebSocket client...');
     if (reconnectTimer) {
@@ -270,7 +253,6 @@ process.on('SIGTERM', () => {
     process.exit(0);
 });
 
-// Xử lý lỗi uncaught
 process.on('uncaughtException', (error) => {
     console.error('❌ Uncaught Exception:', error);
     process.exit(1);
@@ -281,7 +263,6 @@ process.on('unhandledRejection', (reason, promise) => {
     process.exit(1);
 });
 
-// Status check mỗi 10 phút
 setInterval(() => {
     const vietnamTime = new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' });
     const now = new Date(vietnamTime);
@@ -296,4 +277,4 @@ setInterval(() => {
     } else {
         console.log(`⏰ ${timeStr} - Đang chờ khung giờ xổ số (16:00-19:00)`);
     }
-}, 600000); // Check mỗi 10 phút
+}, 600000);
